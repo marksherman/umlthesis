@@ -1,13 +1,48 @@
 \chapter{Background}
 \label{chap:background}
 
-This chapter has been cut down significantly as this is just a template. You should write a LOT more than is here.
+\section{App Inventor}
+\label{sec:app-inventor-background}
 
-Education has evolved with culture and technology.  Classical wisdom calls only for the ``three R's" (reading, writing, and arithmetic) in schools, which today is considered foundational but insufficient for life. 
+\section{Graphical Languages}
+\label{sec:graphical-languages}
 
-\section{Brief History of Engineering Education}
+Much of the literature concerning programming efficacy was done at a time when visual languages were emerging as a purported panacea of usefulness \citep{shu-1988}, but with little empirical evidence to substantiate those claims \citep{petre-1995}. This is not particularly endemic to visual languages, evidenced by many historic complaints, including \citet{sch-1980}, ``Computer scientists... make broad claims for the simplicity, naturalness, or ease-of-use of new computer languages or techniques, but do not take advantage of the opportunity for experimental confirmation.'' Speaking of diagram-based visual languages \citet{blackwell-2001} offered a challenge to researchers to support their claims of intuition through visual programming, ``...to explain why this intuition may be valid, and to propose the ways in which, if it is valid, it can most be effectively exploited.'' Consider that challenge accepted.
 
-STEM education, of which engineering is a component, is in need of ``evidence-based" tools to measure their effectiveness \citep{csed-guzdial}. Conversely, lab-generated scientific data on education is often too abstract to be directly usable for real teachers \citep{sandoval}.
+But first, some background on Cognitive Dimensions.
+
+\subsection{Cognitive Dimensions of Notations}
+The Cognitive Dimensions of Notations framework was developed over many years, most formally canonized in \citet{blackwell-2003}. This framework provided a vocabulary for interface designers that offered a comprehensible, broad evaluation to discuss how a language suits its users needs. Their mission was for this vocabulary to be easily applicable, understandable, and most importantly, be theoretically coherent. 
+
+The cognitive dimensions framework presented an empirically-derived set of dimensions that can be generally measured for a given class of user activity. These dimensions described different cognitive mechanisms that are necessary for the user to execute a given action, and helped create a meaningful dialog about how those dimensions can be traded to optimize the action for the user \citep{blackwell-2003}. The research was started to investigate why some notations work and don't work for the people using them \citep{petre-2006}. 
+
+The dimensions alone do not constitute anything. A dimension is not good or bad. Dimensions are part of the framework's instrument, which includes evaluation of relevant dimensions for a particular task. Application of the the dimensions to a set of representative tasks is what drives the apparatus, and the assessment is in the comparison of the desired dimensionality for those tasks compared to the observed value of those dimensions for the task. This also makes it possible to use the cognitive dimensions framework, in a constrained form, as a user survey tool, to provide users with a method for describing their experience with a notation system.
+
+Without any further fanfare, here are the dimensions, in their entirety as of \citeyear{blackwell-2003}:
+\begin{description}
+\item [Viscosity] Resistance to change, or difficulty to make a change. Modifying heading styles across a document manually is a viscous activity, in that the user's desired action is seemingly simple, but the effort to execute it is significant.
+\item [Visibility] Ability to view components easily. This dimensions is often traded away in languages in favor of, for example, abstractions.
+\item [Premature commitment] Constraints on the order of doing things. In programming, forces the programmer to make decisions before they ahve the information to base the decision on. \citet{roast-2000} described this as "the user having to satisfy the secondary goal prior to achieving the primary goal."
+\item [Hidden dependencies] Entities may cite each other, and a change in one entity may create change elsewhere unexpectedly due ot unapparent citations. This is common in spreadsheets, where cell references are not easily visible.
+\item [Role-expressiveness] The purpose of an entity is readily inferred. The reader can discover the author's intent. 
+\item [Error-proneness] Invites mistakes. Can be protected with preventative mechanisms.  
+\item [Abstractions] Change the underlying notation. Common examples are macros, functions, global find-and-replace, word processor styles, and even speed dial. They can be persistent (macros) or transient (find and replace). An abstraction manager is necessary if the user is allowed to edit the abstractions. 
+\item [Secondary notation] Information encoded in means other than the formal syntax. 
+\item [Closeness of mapping] How closely the notation relates to the result it describes. 
+\item [Consistency] Similar semantics are expressed in similar syntactic forms. Information can be obscured by inconsistent presentation.
+\item [Diffuseness] Verbosity of the language. Large icons, long phrases, and other forms of graphical real estate consumption contribute to diffuseness. I do not know why this dimensions isn't called verbosity, which could easily be contrasted by calling low verbosity succinct.
+\item [Hard mental operations] Creates high demand on cognitive resources. This is an interesting dimensions, as it makes clear to designers that sometimes a notation can force a user to work things out in their head, or otherwise tax working memory.
+\item [Provisionality] Provisional notation, meaning temporary, allows for low commitment to a notation. This may be useful for sketching, recording potential options, ``what if'' exercises, and general exploration activities.
+\item [Progressive evaluation] Work can be checked at any time. Evaluation is an important part of the design process, and drives iteration \citep{atman-2003}. A well-known advantage to interpreted programming environments is their ease of work evaluation, where the user can try out partially-completed programs at any time, and have meaningful interactions with their partial work.
+\end{description}
+
+\subsection{Secondary Notation}
+One of these dimensions in particular, secondary notation, emerged as especially important to visual programming \citep{petre-2006}. The work at the time was focused on diagram programming, such as LabVIEW, where researchers found a distinct and repeating signal that differentiated experts from novices. That signal was in the use of secondary notation, where experts would use arrangement and layout of the diagram itself to convey information not encoded in the formal notation. 
+
+Secondary notation is, generally, any notation that's not part of the formal notation, and may include comments and whitespace in text languages, layout in diagrams, proximity in blocks languages, and much more. Often, secondary notation can be used however the user likes, and therefore can be used to record information that the designer of the notation did not anticipate. \citet{petre-1995} claimed that much of the comprehensibility of graphical programming is in the secondary notation, and \citet{raymond-1991} conjectured, even earlier, that the layout of a visual program was the most important, and possibly only, aspect that was truly visual. Of course, \citeauthor{raymond-1991} had a very specific meaning of ``visual,'' where it depended on being non-discrete, unable to guarantee syntactic or semantic differentiation, similar to the mathematical notion of continuity or the electronic notion of analog. In fact, \citeauthor{raymond-1991} called such a language Analog, and contrasted it against Notational languages, which were discrete, with strongly differentiable notational marks and strongly differentiable conceptual objects being represented. This distinction of Notational versus Analog language was developed earlier as part of an interesting philosophical discussion on notations, and asked hard questions about denotation and representation \citep{goodman-1976}. This discussion had nothing to do with programming, nor visual programming, but it was brought into that domain by \citeauthor{raymond-1991}, and nearly predicted the findings of the expert and novice usage difference in secondary notation, found later by \citet{petre-2006}.
+
+
+
 
 %\begin{figure}
 %\centering
@@ -16,10 +51,9 @@ STEM education, of which engineering is a component, is in need of ``evidence-ba
 %engineering students \citet{atman-2003}}
 %\end{figure}
 
-\section{Design Activity Studies}
-	\label{sec:activity-design-studies}
-\citet{welch} performed an experiment on design activities
-carried out by seventh grade students. The steps are:
+\section{Teacher Dashboards}
+\label{sec:teacher-dashboards}
+
 
 \begin{enumerate}
 \item Understand the problem
