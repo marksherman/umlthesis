@@ -1,40 +1,5 @@
 \chapter{Discussion}
 
-This chapter is mostly stubs and is heavily cut down. Origional content is left as context examples for \LaTeX mechanisms.
-
-\begin{table}
-\begin{centering}
-\begin{tabular}{l c c c}
-	%\multicolumn{4}{l}{{\large Elevator Control Specifications}} \\
-	\toprule
-							& Light Opt.	& Gear Reduction	& Elevator Control	\\ \midrule
-	Average Non-Iterating time 	& 25.5\%	& 28.6\%	& 35.8\% 	\\ \midrule
-	Standard Deviation 			& 7.0 & 13.0 & 13.5 \\ 
-	\bottomrule
-\end{tabular}
-\caption[Average non-iterating times for each activity.]{Average non-iterating times for each activity. These data do not include instances where students did not complete an activity.}
-\label{tab:average-intro-times}
-\end{centering}
-\end{table}
-
-\begin{table}
-\begin{centering}
-\begin{tabular}{l c c c}
-	%\multicolumn{4}{l}{{\large Elevator Control Specifications}} \\
-	\toprule
-							& A/B 	& C/D	& E/F	\\ \midrule
-	Overall Success Rating          	& 3/6		& 5/6 		& 1/4		\\ \midrule
-	Average Non-Iterating time 	& 14.4\%	& 37.9\%	& incomplete/4.9\% 	\\ \midrule
-	\emph{StdDev Non-Iterating time}	& \emph{6.0}	& \emph{2.7}	& 					\\ \midrule
-	Average time per iteration 	& 7.8 min & 3.8 min & incomplete/6 min \\ \midrule
-	\emph{StdDev Av time per iteration}	& \emph{7.8}	& \emph{3.1}	& 					\\ 
-	\bottomrule
-\end{tabular}
-\caption[Correlations of success to iteration time.]{Success correlations with non-iterating time and average time per iteration based on three activities. Group E/F participated in, but did not complete, the Gear Reduction activity and did not participate in the Elevator Control activity. That group's listings for non-iterating time and time per iteration considers only the one activity they completed: Light Optimization. }
-\label{tab:success-correlations}
-\end{centering}
-\end{table}
-
 % This table is BAD data. I only leave it here for it's awesome formatting, which could come in handy.
 %\begin{table}
 %\begin{centering}
@@ -61,16 +26,13 @@ This chapter is mostly stubs and is heavily cut down. Origional content is left 
 
 
 	
-\section{Conclusions }
-
-The data presented in Table~\ref{tab:success-correlations} shows that the most successful students were consistently slower to begin testing across all activities, indicating that they spent more time in each activity trying to understand the problem before attempting a solution. The speed of iteration also correlates with success, but not as strongly as the introductory time spent.
+\section{Conclusions}
 
 
-\section{Recommendations } \label{sec:recommendations}
-
-Recommendations that bear on the challenge of creating design-based engineering activities can be made from this study. 
+\section{Recommendations} \label{sec:recommendations}
 
 
 \section{Future Work}
+\label{sec:futurework}
 
-New methods for characterizing and analyzing design behaviors, specifically testing and iteration, were created in this project. 
+Better fine-grain collection of snapshot data. In this work, the entire project was captured on every change, which created a need to reverse-engineer what changes occured between snapshots post-facto. Upcoming updates to Blockly will allow for easier access to succinct event descriptions, potentially allowing only the changes themselves to be sent, effectively reducing the transmission payload and increasing transparency of collected data. Such improvements can make future collection experiments easier, and provide data that is richer for analysis, with no loss in accuracy. 

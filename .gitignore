@@ -32,3 +32,4 @@ main.pdf
 *.xdy
 *.tdo
 .DS_Store
+_minted-main

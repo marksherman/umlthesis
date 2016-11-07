@@ -1,6 +1,103 @@
 \chapter{Methodology}
 
-This chapter is mostly stubs and is heavily cut down. Origional content is left as context examples for \LaTeX mechanisms. 
+\section{The Data Collection System}
+One mission of this project was to build instrumentation into App Inventor to collect rich student programming behavior data as the students program. This instrumentation added to a growing tradition of instrumentation within the development environment itself, such as the works of \citet{berland-2013}, \citet{piech-2012}, \citet{lipman-phd}, and others.
+
+\subsection{Modifications to App Inventor}
+Instrumentation was added to App Inventor, inspired by \citet{piech-2012}. Every time the user changed anything, for example: move a block, add a block, or modify a component, a snapshot was triggered, and the project state was captured. A single snapshot contained the entire block workspace and designer configuration in text form. Assets, including images uploaded, were not included. This text payload grew linearly with the complexity of the project, causing concern for degradation of computational or transmission performance. In testing, that concern was allayed; a truly extreme case would be necessary to adversely impact performance, and the constraints of the experimental design would not allow for such a project to develop.
+
+The snapshot payload was transmitted upon each user change to a server, where it was de-identified and stored. Details on the server's processes are below (Section \ref{sec:server}). The snapshot itself contained a collection of fields, shown in Table \ref{tab:snapshotPayload}. 
+
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{l l}
+		Data Field 			& Contents \\ \hline
+		userName  			& User's real google account name. \\
+		projectName 		& User's project file name. 	\\
+		projectId 			& Unique ID assigned to the project, invisible to user.	\\
+		screenName 			& Which screen in the project the user is modifying.	\\
+		sessionId 			& Browser session, to identify session boundaries in analysis.	\\
+		yaversion 			& Current version of the App Inventor environment. 	\\
+		languageVersion 	& Current version of the App Inventor blocks language. 	\\
+		eventType 			& Future use: to explicitly identify the change event that occurred. 	\\
+		blocks 				& Full content of the blocks, in XML. 	\\
+		form 				& Full content of the screen's design, or form, in JSON.
+
+	\end{tabular}
+	\caption{The \emph{projectData} structure that comprises the snapshot payload.}
+	\label{tab:snapshotPayload}
+\end{centering}
+\end{table}
+
+App Inventor was primarily composed using the Google Web Toolkit (GWT), which allows rich web pages to be written in Java and compiled to HTML and javascript. Within the GWT-built App Inventor page there is a panel hosting a somewhat-sandboxed blockly environment, written in pure javascript. The snapshot mechanism was implemented in the blockly environment, but required access to certain data in the GWT environment. The interface between GWT and blockly was implemented in a file \emph{BlocklyPanel.java}, which was modified to expose the necessary data. The \emph{BlocklyPanel.java} file was large, with over a thousand lines in length, and governed the entire blockly sandbox within App Inventor. Exposing new features to blockly required adding new GWT java methods to extract the data from the GWT-managed memory, and then adding corresponding javascript functions that would be exported into the blockly environment that serve as wrappers for the GWT methods. Creating new features on this seam between environments was not trivial. The modifications to this file, but not the file in its entirety, are listed in Appendix \ref{src:ai/BlocklyPanel.java}.
+
+The snapshot mechanism itself was added to blockly environment, and provided a single external function, \emph{Blockly.Snapshot.send}. This function could be called anywhere from within blockly (or within GWT, with some effort, if desired). In this experiment, snapshots were triggered in only one place, the REPL manager, or, as it was known in the source, \emph{replmgr}. The REPL manager maintained the connection between App Inventor and the connected target device. When a device was connected, any changes to the app in App Inventor were immediately sent to the device, all while the app continues to run on the device uninterrupted. The REPL manager made this possible, collecting code changes, compiling them, and sending them to the device. The snapshot send function was inserted into the REPL manager's \emph{pollYail} routine, which is the function that is called to check if there is a code update to push to the phone. That function was called on-demand by the REPL manager approximately anytime a change was made, with a small amount of change aggregation. That aggregation was intended to service the REPL in a good-enough fashion, which did not require changes to be updated on every pixel-wise change as a block was dragged across the screen, but did require the end position. This function already aggregated trivial, in-motion changes such as block dragging into atomic events, and this degree of granularity was ideal for snapshot capture. 
+
+An alternative trigger point for snapshots was in the \emph{blocklyWorkspaceChange} event callback function, but this position was overly aggressive, as it was used in the graphics engine of blockly to repaint the screen on \emph{any} change. For a snapshot, in-progress block drags across the screen were considered part of the same atomic change. Only the final resting position was necessary for a the desired data density of a snapshot. Additionally, the workspace change event could be called hundreds of time more often than \emph{pollYail,} which put unnecessary stress on the snapshot computation and transmission mechanisms. Triggering snapshots from within the REPL manager position, described above, offered an ideal compromise. Every logical block change was captured, but transient state of the block mid-change was not. Additionally, \emph{pollYail} was also called in response to changes in the Designer, allowing component changes to trigger snapshots for free.
+
+Another triggering option was considered, where each block type would have the trigger added to their modification callback functions, effectively instrumenting the individual blocks instead of the workspace as a whole. This option could have provided additional specificity, as it could reliably report the nature of the change that triggered the snapshot, such as ``text block was moved.'' The snapshot protocol was designed to accommodate such data, using the \emph{eventType} field in the payload structure (Table \ref{tab:snapshotPayload}). This metadata would have been committed to the git repository in notes form, and would be extractable for every change just as easily as the content data. Certain analysis would not need the data if this metadata were consistent. However, the engineering demand to implement this style of instrumentation with full coverage was too great to be complete in time for the pilot study. As such, one weakness of the snapshot system as described here is that it does not know why a snapshot was triggered. That was traded for guarantee of full coverage, that no change would be missed. As a result, analysis required the construction of tools to extract that change data from the recorded data. Future work may include such event-driven metadata, and is further explored in Section \ref{sec:futurework}.
+
+\subsection{Snapshot Receiver Server}
+\label{sec:server}
+The snapshots captured in App Inventor were transmitted to a secure research server, running software that will be described in this section, and called the ``Snapshot Service.'' This server architecture received snapshot payloads from the custom instances of App Inventor, de-identified the user names, and stored the snapshots and metadata persistently. This service needed to be durable, as it handled sensitive user information. It also needed to be performant, as under worst-case load scenario there could be hundreds of concurrent users, each delivering over 100 snapshots each minute. The service was written in node.js \citep{nodejs}, a server-side javascript environment that provides high performance and reliability through an event-driven, asynchronous I/O model. Relevant source code is included in Appendix \ref{src:snapshot-service}.
+
+The service implemented a JSON-RPC API \citep{jsonrpc}, where each snapshot sent from App Inventor was a new RPC connection. There was one API endpoint, \emph{file.saveProject}, which accepted the data, applied the de-identifier, and dispatched the process to commit the change to disk. The source code can be found in Appendix \ref{src:file.js}. The logic of the \emph{saveProject} process was as follows:
+
+\begin{enumerate}
+\item Parse JSON sent from App Inventor
+\item Extract real user name from parsed data
+\item Replace real user name with code name (detail below in Section \ref{sec:deident})
+\item Save data to database:
+\begin{enumerate}
+	\item Sanitize data, removing dangerous dots and slashes from filenames
+	\item Assemble git commit message
+	\item Assemble directory for this project based on user code name and project ID
+	\item Make directory on disk (using -p to only create new as required, preventing overwriting)
+	\item Write files to directory (blocks and project form)
+	\item Create git repository in that directory (git re-initializes non-destructively if it already exists)
+	\item Set git credentials for user, based on code name
+	\item Stage and commit project files (blocks and project form)
+	\item Amend current directory as git notes
+\end{enumerate}
+\end{enumerate}
+
+\subsection{De-Identification}
+\label{sec:deident}
+Removal of identifiable user data is a critical issue in human subjects research. In accordance with the IRB approval, student work artifacts had to be stripped of identifiable information, and a system feature was implemented to do so automatically (Appendix \ref{IRB:deident}). This feature replaced the student's real user name with a randomized code name. This feature also kept record of the relations between real names and code names, allowing a consistent mapping. The same user would always be given the same code name, which was critical, as each snapshot was an addition to the data store. Without consistent user-to-code-name mapping, the thousands of snapshots would be like a spilled deck of index cards- useless without order or consistency. 
+
+The map between user names and code names was stored in a database file on the collection server. That server was only accessible to the author, and two trusted IT personnel in the computer science department. Those IT personnel never accessed the server in the time since data collection began. The database selected was sqlite3, because is uses a single, regular file as the datastore that could be carefully controlled and protected. That file resided on the server, and was kept separate from the bulk snapshot data. The snapshot data could be moved and analyzed without fear of exposing the real names associated with those data. The mapping database file was only moved off the server in once instance, over encrypted and secured means, to the author's personal computer, which employed a reasonable guarantee of access control, like the server. This protocol was deemed safe by the research team and IRB.
+
+Implementation of the de-identifier was conceptually straightforward- upon every snapshot, look up the user name in the database, and if found, replace the user name with the existing code name. If the user is not in the database, generate a new code name, and insert it into the database. Either way, a code name is returned, and replaces the user name. 
+
+In the event of an error, the entire snapshot save operation was aborted, so there was no possibility of data being saved without a valid, de-identified code name replacement. The de-identification system was thoroughly tested, protected with regression unit tests, and closely monitored during data collected. During the entire data collection, no error in this system occurred. The combination of sqlite3 and node.js proved to be surprisingly fast, and handled the highest traffic periods with ease. The author would like to attribute this performance in part to their quality and efficient programming, but such cannot be validated scientifically at this time.
+
+The full source code of the de-identification module is in Appendix \ref{src:userdb.js}.
+
+\subsection{The Snapshot Database}
+The database containing the snapshot contents was a collection of git directories. Each user project was a git repository, and each recorded snapshot was a commit into that repository. Additional metadata was included in git notes, or as a content file in the repository. This concept was based on the work of \citet{lipman-phd}. The technology of this database was differentiated by its enhanced granularity of data recorded, adoption of a remote client-server model, and future-looking adapters to allow use of different environments and different languages. The database itself was organized in directories on disk of the server, where the first level of directories contained users. Within each user folder were folders representing each project that was recorded for that user. The project names were a combination of the user-mutable project name and the unique project ID generated by App Inventor. The two fields were concatenated with a \emph{\#} character, which is not allowed in file names and does not occur in project IDs, so it provides a unique token to parse them apart, if needed. Within each project were directories for each screen. Most apps did not extend beyond the default screen, which is always called \emph{Screen1.} Within each screen folder were the contents of the designer and blocks, represented as JSON and XML files, respectively. This is visualized with example data in Table \ref{tab:git-db-org}.
+
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{ll}
+	\hline
+	DB directory&  \mintinline[fontsize=\footnotesize]{bash}{/}		\\
+	Code name 	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose}		\\
+	Project name & \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount}		\\
+	Project ID 	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git}		\\
+	Screen name	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1}		\\
+	Blocks code	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1/blocks.xml}		\\
+	Designer form& \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1/form.json}		\\
+	\hline
+	\end{tabular}
+	\caption[Organization of snapshot database.]{Organization of snapshot database, shown with example data, where each project was a git repository, containing the whole contents of that project's code.}
+	\label{tab:git-db-org}
+\end{centering}
+\end{table}
+
+The primary benefit of using git was that it allowed easy human perusal through the time line of projects, and provided code diffs for free. This feature set was briefly useful in assessing that the collection system was working, but in general, these benefits were not highly utilized. Analysis was conducted by developing python scripts to extract features from the data, leaving the human browsing features of git irrelevant. Analysis is covered in depth in Chapter \ref{chap:analysis}.
+
 
 \section{Subject Selection} 
 
@@ -8,111 +105,22 @@ All students read, understood, and signed a student assent form and their guardi
 
 \section{Session Protocol}
 
-At the conclusion of the activity, students were led in a group conversation about what they learned and developed. These conversations were also recorded. The questions asked by researchers during this conversation were variations of:
-\begin{itemize}
-\item What did you do to find your solution?
-\item Did you do anything early on that you did again to help yourself?
-\item If you had a friend who was coming in to work on this problem tomorrow,
-what would you recommend they do?
-\item Are there any other tricks you discovered?
-\end{itemize}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Design of Activities}
-This is a beautiful, professonal-looking table.
-
-\begin{table}
-\begin{centering}
-	\begin{tabular}{c  c   c}
-	Week & Activity & Related Field \\ \hline
-	1 & ``Rush Hour" Game & math problem solving \\ 
-	2 & Light Optimization & electrical engineering \\ 
-	3 & Gear Reduction & mechanical engineering \\ 
-	4 & Word Search & computer science \\ 
-	5 & Elevator Control & computer science \\ \hline
-	\end{tabular}
-	\caption[List of design activities.]{List of design activities, in order that they were conducted by students, with their related field.}
-	\label{tab:activity-list}
-\end{centering}
-\end{table}
-
-In total, the activities are intended to support computational thinking, as discussed in Chapter~\ref{chap:background}. Every activity represented a real engineering or design problem, had observable iteration behavior, defined metrics of success, and were process-oriented, as discussed in Section~\ref{sec:MEA}.
-
- \label{sec:success-levels}
-Each activity had two levels of success. The first level is the completion of a successful design that solves the problem. The second level is synthesizing a general process for arriving at a solution. Both levels are defined as success criteria for each activity in the following sections. The five activities are now presented. They are also summarized in Table~\ref{tab:activity-list}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Rush Hour
-\subsection{Parts of the study}
-
-	I proceeded to have a subsection for each component activity of my study. Your study will likely be different in structure, so I removed it. I do have a few cool tables, so I left those in.
-	
-		\begin{table}
-	\begin{centering}
-	\begin{tabular}{l  l   l}
-		\multicolumn{3}{l}{{\large Rush Hour Specifications}} \\
-		\toprule
-		\multirow{2}{*}{Success Criteria}  
-			& Solution: 		& Solved puzzle \\ \cmidrule(r){2-3}
-			& Process:		& Described Strategies \\ \midrule
-		Iteration Metric	 & \multicolumn{2}{c}{Backtracking or resetting: deviation from current course }\\ 
-		\bottomrule
-	\end{tabular}
-	\caption{Rush Hour activity success and iteration criteria.}
-	\label{tab:spec-rush-hour}
-	\end{centering}
-	\end{table}
-	
-	\subsubsection{Purpose}
-	
 
 
-	\begin{table}
-	\begin{centering}
-	\begin{tabular}{l  l   l}
-		\multicolumn{3}{l}{{\large Gear Reduction Specifications}} \\
-		\toprule
-		\multirow{2}{*}{Success Criteria}  
-			& Solution: 		& Built transmission that lifts mass \\ \cmidrule(r){2-3}
-			& Process:		& Non-trivial suggestions for a friend \\ \midrule
-		Iteration Metric	 & \multicolumn{2}{c}{Applying energy to system, either by hand or by motor}\\ 
-		\bottomrule
-	\end{tabular}
-	\caption{Gear Reduction activity success and iteration criteria.}
-	\label{tab:spec-gears}
-	\end{centering}
-	\end{table}
+% \begin{table}
+% \begin{centering}
+% 	\begin{tabular}{c  c   c}
+% 	Week & Activity & Related Field \\ \hline
+% 	1 & ``Rush Hour" Game & math problem solving \\ 
+% 	2 & Light Optimization & electrical engineering \\ 
+% 	3 & Gear Reduction & mechanical engineering \\ 
+% 	4 & Word Search & computer science \\ 
+% 	5 & Elevator Control & computer science \\ \hline
+% 	\end{tabular}
+% 	\caption[List of design activities.]{List of design activities, in order that they were conducted by students, with their related field.}
+% 	\label{tab:activity-list}
+% \end{centering}
+% \end{table}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Word Search
-\subsection{Week 4: Word Search}
-	
-	\begin{figure}
-	\begin{centering}
-	\begin{tabular}{|c|c|c|c|c|}
-	\hline 
-	Y & E & S & L & F\tabularnewline
-	\hline
-	\hline 
-	M & N & H & R & I\tabularnewline
-	\hline
-	\hline 
-	P & T & O & U & R\tabularnewline
-	\hline
-	\hline 
-	A & C & E & M & E\tabularnewline
-	\hline
-	\end{tabular}
-	\par\end{centering}
-	
-	\caption{Example word search puzzle provided to students.}
-	\label{fig:Example-word-search}
-	\end{figure}
-	
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Analysis
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Plan
 \section{Coding and Analysis} \label{sec:analysis-plan}
-Videos from student sessions were analyzed using coding techniques informed by and, where specific codes were defined to describe important behaviors. Additional codes were created in the style of grounded theory: as behaviors and patterns that were not predicted were observed. 
-
-The body of codes covered a wide range of design behaviors, as seen in Appendix~\ref{tab:starting-codes}, but only the TEST code was used in analysis, as it was used to characterize design iteration. 
