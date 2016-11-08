@@ -36,7 +36,7 @@ The participants in this study were children, so an informed consent form was cr
 
 \section{Informed Consent, Summer Camp}
 \label{sec:icf:camp}
-The participants in this study were children, so an informed consent form was created for their parents, and a student assent form was provided to the children. The student assent form was unchanged from the In-School cohort (Appendix \ref{sec:icf-school}). The parental consent form was updated. The following pages are copies of the updated summer camp parental consent and the corresponding IRB approval letter.
+The participants in this study were children, so an informed consent form was created for their parents, and a student assent form was provided to the children. The student assent form was unchanged from the In-School cohort (Appendix \ref{sec:icf:school}). The parental consent form was updated. The following pages are copies of the updated summer camp parental consent and the corresponding IRB approval letter.
 
 \includepdf[pages=-]{IRB/icf-summer-camp-parent-consent-2016.pdf}
 \includepdf[pages=-]{IRB/icf-summer-camp-parent-consent-2016-approval.pdf}
@@ -50,11 +50,13 @@ Amendment 10 added protocols for the Debugging Activity and Temperature Activity
 
 
 \section{Debugging Activity Protocol}
+%TODO
 \includepdf[pages=-]{IRB/AM10DebuggingAssessment.pdf}
 \label{sec:IRB:debugging}
 
 
 \section{Temperature Activity Protocol}
+%TODO
 \includepdf[pages=-]{IRB/AM10TemperatureAssessment.pdf}
 \label{sec:IRB:temperature}
 
@@ -62,13 +64,38 @@ Amendment 10 added protocols for the Debugging Activity and Temperature Activity
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\chapter{Code Availability}
 
-\chapter{Code Listings}
-Source code for the data capture, collection, and analysis systems used in this project are listed in full here. All code was written by the author except where noted.
+\noindent The App Inventor project, supported by the MIT Center for Mobile Learning, can be found here:
+
+\noindent \url{https://github.com/mit-cml/appinventor-sources}
+
+\noindent The modified version of App Inventor used in this project can be found in the author's github account:
+
+\noindent \url{https://github.com/marksherman/appinventor-sources/tree/snapshot-service}
+
+\noindent The long-term home for the features from this project is within the github home of the Engaging Computing Lab at UMass Lowell. That code can be found here:
+
+\noindent \url{https://github.com/engaging-computing/appinventor-sources}
+
+\noindent The source of this document is available from the author here:
+
+\noindent \url{https://github.com/marksherman/umlthesis/tree/markphd}
+
+\noindent The template used to write this document is available from the Engaging Computing lab at UMass Lowell:
+
+\noindent \url{https://github.com/engaging-computing/umlthesis}
+
+\noindent Especially relevant excerpts from the source code are listen in Appendix \ref{appendix:listings}.
+
+\chapter{Code Listings} \label{appendix:listings}
+
+Interesting source code for the data capture, collection, and analysis systems used in this project are listed in full here. All code was written by the author except where noted.
 
 % font sizes, ascending: \tiny \scriptsize \footnotesize \small \normalsize
 % scriptsize gets a little more than 80 chars wide and 44 lines on the page, which is fair.
 \setminted{fontsize=\scriptsize, fontfamily=courier, linenos, breaklines}
+
 
 \section{Modifications to App Inventor}
 \label{src:appinventor}
@@ -84,6 +111,7 @@ This file provided the interface between the general App Inventor web page, incl
 
 \inputminted[firstline=626, lastline=651]{java}{src/appinventor/BlocklyPanel.java}
 \inputminted[firstline=902, lastline=913, breakbefore=.]{java}{src/appinventor/BlocklyPanel.java}
+
 
 \section{Snapshot Service}
 \label{src:snapshot-service}
@@ -108,3 +136,24 @@ Provides utilities to interface with git on the server to save data. Each user's
 \label{src:gc.sh}
 The additive git method used by this service creates inefficiencies on the host file system that consumes space and inodes at a high rate. This script `garbage collects' the database, repacking it efficiently, and should be run occasionally while the system is in use. This file is included here as a warning to anyone in the future who wants to use git as a database.
 \inputminted{bash}{src/snapshot-service/gc.sh}
+
+
+\section{Analysis Tools}
+
+\subsection{main.py}
+%TODO This needs to be updated when the scrips change! Make sure this is re-copied latex directory before final thesis print!
+This is currently an in-progress version of this file, containing provisional scratchwork and some in-development modifications. These temporary features will be removed and replaced with restored, fully consistent code for the final dissertation document.
+\inputminted[lastline=212]{python}{src/analysis/main.py}
+
+\subsection{gitfilter.py}
+\inputminted[lastline=168]{python}{src/analysis/gitfilter.py}
+\subsection{xml\_analyze.py}
+\inputminted[lastline=261]{python}{src/analysis/xml_analyze.py}
+
+
+\section{Snapshot Playback}
+The playback mechanism allowed a full history of snapshots from a project to be viewed in an App Inventor blockly window. It enabled the researcher to step through the history- forward, backwards, and arbitrarily, displaying the code blocks as the user placed them. Additionally the mechanism displayed the timestamp of the current snapshot, in seconds since the project was created, how many snapshots were taken, and what number snapshot was currently being viewed.
+
+This file, \emph{playback.js,} was added to the blockly editor within App Inventor, and provided the playback feature. It used the javascript console to start and control playback.
+\label{src:playback.js}
+\inputminted{javascript}{src/playback/playback.js}

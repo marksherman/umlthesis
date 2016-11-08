@@ -2,9 +2,51 @@
 
 \section{Research Focus}
  
-\section{Problem Statement}
+\section{Problem Statement} \label{sec:problem-statement}
+
+In February of 2015, nearly two years ago, the research question was simple, ``What questions could be answered if App Inventor were instrumented?'' Today we have such a set of questions, concentrated in three classes, concerning the construction of that instrumentation, the data that it would produce, and finally, the nature of blocks programming to which it provides access. The primary question, to which all the other questions are effectively in service, is:
+
+\begin{quote}
+\textbf{Does a pattern of block movement or manipulation exist that signals that the student is not working productively?}
+\end{quote}
+
+This question asks about \emph{flailing,} a behavior of making unproductive, sometimes random changes to the code, possibly elicited by the student being lost, and requires teacher intervention. A thorough discussion of flailing and other behaviors will follow in Section \ref{sec:behaviors}.
+
+The complete set of research questions is below, with classes presented in ascending order of research importance:
+
+\begin{enumerate}
+\item Questions Concerning the Construction of a Distributed Snapshot System
+
+\begin{enumerate}
+\item \label{RQ:1.1} How can a system be built to snapshot blocks-based programming in App Inventor? 
+\item \label{RQ:1.2} How can captured snapshot data from ephemeral, remote user sessions be securely and consistently housed in a central server? 
+\item \label{RQ:1.3} What is the correct degree of granularity for such snapshot data?
+\item \label{RQ:1.4} What actions by the user in the graphical, blocks-based system are appropriate to trigger a snapshot?
+\item \label{RQ:1.5} Can data collected by such a system provide clear representations of student progress in a programming work?
+\item \label{RQ:1.6} Particular to App Inventor, how can this data be viewed and replayed to give a viewer a real sense of the work?
+\end{enumerate}
+
+\item Questions Concerning the Analysis of Snapshot Data
+\begin{enumerate}
+\item \label{RQ:2.1} Are changes in secondary notation (block position and movement) extractable from within snapshot data?
+\item \label{RQ:2.2} What other useful measures are extractable from blocks language snapshots?
+\item \label{RQ:2.3} What techniques would be useful for future blocks instrumentation efforts to improve data efficacy?
+\end{enumerate}
+
+\item Questions Concerning the Nature of Blocks Programming
+\begin{enumerate}
+\item \label{RQ:3.1} Can student behavior patterns be detected in snapshot data?
+\item \label{RQ:3.2} Does a pattern of block movement or manipulation exist that signals that the student is not working productively?
+\item \label{RQ:3.3} Can the ratio of secondary notation and formal notation changes indicate anything about the programmer?
+\item \label{RQ:3.4} Do the counts of measures, such as secondary notation changes, correlate with other independent variables?
+\item \label{RQ:3.5} Could these patterns and behaviors be detected in real-time?
+\end{enumerate}
+
+\end{enumerate}
+
 
 \section{Approach}
+App Inventor was modified to include new instrumentation features, which captured snapshot data on every change that the user made to their code. These snapshots were transmitted to a collection server, where they were stored. Multiple cohorts of middle school students enrolled in formal and informal app development curricula were selected to participate in one or two short activities for this study. The project files from those activities, with full snapshot history, were were isolated for analysis. Extensive post-hoc analysis was conducted through the development of specialized analysis tools to extract features from the data suitable for higher-level analysis. Higher-level analysis compared occurrences of features with independent variables, which lead to discovery of feature patterns.
 
 \section{Hypothesis and Contributions}
 
