@@ -1,9 +1,10 @@
 \chapter{Methodology}
 
 \section{The Data Collection System}
-One mission of this project was to build instrumentation into App Inventor to collect rich student programming behavior data as the students program. This instrumentation added to a growing tradition of instrumentation within the development environment itself, such as the works of \citet{berland-2013}, \citet{piech-2012}, \citet{lipman-phd}, and others.
+One mission of this project was to build instrumentation into App Inventor to collect rich student programming behavior data as the students program. This instrumentation added to a growing tradition of instrumentation within the development environment itself, such as the works of \citet{berland-2013}, \citet{lipman-phd}, and others.
 
 \subsection{Modifications to App Inventor}
+\label{sec:mod-ai}
 Instrumentation was added to App Inventor, inspired by \citet{piech-2012}. Every time the user changed anything, for example: move a block, add a block, or modify a component, a snapshot was triggered, and the project state was captured. A single snapshot contained the entire block workspace and designer configuration in text form. Assets, including images uploaded, were not included. This text payload grew linearly with the complexity of the project, causing concern for degradation of computational or transmission performance. In testing, that concern was allayed; a truly extreme case would be necessary to adversely impact performance, and the constraints of the experimental design would not allow for such a project to develop.
 
 The snapshot payload was transmitted upon each user change to a server, where it was de-identified and stored. Details on the server's processes are below (Section \ref{sec:server}). The snapshot itself contained a collection of fields, shown in Table \ref{tab:snapshotPayload}. 
@@ -38,14 +39,15 @@ An alternative trigger point for snapshots was in the \emph{blocklyWorkspaceChan
 
 Another triggering option was considered, where each block type would have the trigger added to their modification callback functions, effectively instrumenting the individual blocks instead of the workspace as a whole. This option could have provided additional specificity, as it could reliably report the nature of the change that triggered the snapshot, such as ``text block was moved.'' The snapshot protocol was designed to accommodate such data, using the \emph{eventType} field in the payload structure (Table \ref{tab:snapshotPayload}). This metadata would have been committed to the git repository in notes form, and would be extractable for every change just as easily as the content data. Certain analysis would not need the data if this metadata were consistent. However, the engineering demand to implement this style of instrumentation with full coverage was too great to be complete in time for the pilot study. As such, one weakness of the snapshot system as described here is that it does not know why a snapshot was triggered. That was traded for guarantee of full coverage, that no change would be missed. As a result, analysis required the construction of tools to extract that change data from the recorded data. Future work may include such event-driven metadata, and is further explored in Section \ref{sec:futurework}.
 
+
 \subsection{Snapshot Receiver Server}
 \label{sec:server}
 The snapshots captured in App Inventor were transmitted to a secure research server, running software that will be described in this section, and called the ``Snapshot Service.'' This server architecture received snapshot payloads from the custom instances of App Inventor, de-identified the user names, and stored the snapshots and metadata persistently. This service needed to be durable, as it handled sensitive user information. It also needed to be performant, as under worst-case load scenario there could be hundreds of concurrent users, each delivering over 100 snapshots each minute. The service was written in node.js \citep{nodejs}, a server-side javascript environment that provides high performance and reliability through an event-driven, asynchronous I/O model. Relevant source code is included in Appendix \ref{src:snapshot-service}.
 
-The service implemented a JSON-RPC API \citep{jsonrpc}, where each snapshot sent from App Inventor was a new RPC connection. There was one API endpoint, \emph{file.saveProject}, which accepted the data, applied the de-identifier, and dispatched the process to commit the change to disk. The source code can be found in Appendix \ref{src:file.js}. The logic of the \emph{saveProject} process was as follows:
+The service implemented a JSON-RPC API \citep{jsonrpc}, where each snapshot sent from App Inventor was a new RPC connection. There was one API endpoint, \emph{file.saveProject}, which accepted the data, applied the de-identifier, and dispatched the process to commit the change to disk. The RPC API, low-level system access, and git access libraries, were based on similar technology developed by \citet{lipman-2011}. No part of that existing system was used wholesale, but the lessons learned from \citet{lipman-2014} strongly informed the design decisions presented here. Dr. \citeauthor{lipman-2014} also provided code review services for this system. The source code can be found in Appendix \ref{src:file.js}. The logic of the \emph{saveProject} process was as follows:
 
 \begin{enumerate}
-\item Parse JSON sent from App Inventor
+\item Parse JSON received from App Inventor
 \item Extract real user name from parsed data
 \item Replace real user name with code name (detail below in Section \ref{sec:deident})
 \item Save data to database:
@@ -75,6 +77,7 @@ In the event of an error, the entire snapshot save operation was aborted, so the
 The full source code of the de-identification module is in Appendix \ref{src:userdb.js}.
 
 \subsection{The Snapshot Database}
+\label{sec:db}
 The database containing the snapshot contents was a collection of git directories. Each user project was a git repository, and each recorded snapshot was a commit into that repository. Additional metadata was included in git notes, or as a content file in the repository. This concept was based on the work of \citet{lipman-phd}. The technology of this database was differentiated by its enhanced granularity of data recorded, adoption of a remote client-server model, and future-looking adapters to allow use of different environments and different languages. The database itself was organized in directories on disk of the server, where the first level of directories contained users. Within each user folder were folders representing each project that was recorded for that user. The project names were a combination of the user-mutable project name and the unique project ID generated by App Inventor. The two fields were concatenated with a \emph{\#} character, which is not allowed in file names and does not occur in project IDs, so it provides a unique token to parse them apart, if needed. Within each project were directories for each screen. Most apps did not extend beyond the default screen, which is always called \emph{Screen1.} Within each screen folder were the contents of the designer and blocks, represented as JSON and XML files, respectively. This is visualized with example data in Table \ref{tab:git-db-org}.
 
 \begin{table}
@@ -95,25 +98,161 @@ The database containing the snapshot contents was a collection of git directorie
 \end{centering}
 \end{table}
 
-The primary benefit of using git was that it allowed easy human perusal through the time line of projects, and provided code diffs for free. This feature set was briefly useful in assessing that the collection system was working, but in general, these benefits were not highly utilized. Analysis was conducted by developing python scripts to extract features from the data, leaving the human browsing features of git irrelevant. The analysis tools are discussed in depth in Section \ref{sec:analysis-plan}. Additionally, this method of adding many commits to many git repositories is disk-inefficient to git itself, and resulted in an extremely large consumption rate of disk space, and more critically, file system inodes. Disk inodes are the handles that the file system uses to identify and find files, and the maximum number available on an ext4 file system is fixed. Working in this way, git consumed an exorbitant number of these inodes, and required occasional repacking to free them, resulting in the development of the garbage collection script, included in Appendix \ref{src:gc.sh}. While the system was in use, that script needed to be run weekly to prevent the disk from filling and becoming unwritable. 
+The primary benefit of using git was that it allowed easy human perusal through the time line of projects, and provided code diffs for free. This feature set was briefly useful in assessing that the collection system was working, but in general, these benefits were not highly utilized. Analysis was conducted by developing python scripts to extract features from the data, leaving the human browsing features of git irrelevant. The analysis tools are discussed in depth in Section \ref{sec:analysis-tools}. Additionally, this method of adding many commits to many git repositories is disk-inefficient to git itself, and resulted in an extremely large consumption rate of disk space, and more critically, file system inodes. Disk inodes are the handles that the file system uses to identify and find files, and the maximum number available on an ext4 file system is fixed. Working in this way, git consumed an exorbitant number of these inodes, and required occasional repacking to free them, resulting in the development of the garbage collection script, included in Appendix \ref{src:gc.sh}. While the system was in use, that script needed to be run weekly to prevent the disk from filling and becoming unwritable. 
 
 
 \section{The Experiment}
 
-\subsection{Subject Selection} 
+The study consisted of two small programming activities, where students were given a constrained programming problem. Their work on those problems were recorded using the snapshot system, and then analyzed against human-rated conditions of flailing and other independent variables.
 
-All students read, understood, and signed a student assent form and their guardians read, understood, and signed a parental consent form 
+\subsection{Participant Selection \& Recruitment} 
 
-\subsection{Activities}
+All participants were from an ongoing project, \emph{Middle School Pathways in Computer Science,} a partnership between the University of Massachusetts Lowell, the urban school districts of Medford and Everett, MA, and the Tri-City Technology Education Collaborative Inc. This project developed and implemented in-school and summer camp curricula in mobile app development using App Inventor, centralized around ``Computing with a Community Focus'' \citep{Ni-2016}. Six cohorts participated. Four cohorts were from formal, in-school classes, and two were from informal summer camp environments. The total number of participants was 127, which was broken out into cohorts in Table \ref{tab:cohorts}
+
+Cohort selection was simple. Teachers of the in-classroom program who had at least one whole year of experience with the program were asked to volunteer a class period for this experiment. From the volunteered classes, three were selected based on schedule availability of the author, teacher, and technology. A fourth in-classroom cohort was added when one teacher requested the author return to run the activity again with an additional class section.
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{clr}
+	Cohort & Environment & $n$ \\
+	\hline
+	1 & Classroom & 21		\\
+	2 & Classroom & 24		\\
+	3 & Classroom & 20		\\
+	4 & Classroom & 21		\\
+	5 & Summer Camp & 22	\\
+	6 & Summer Camp & 19	\\ \hline
+	\multicolumn{2}{r}{Classroom Total} & 86 \\
+	\multicolumn{2}{r}{Summer Camp Total} & 41 \\ \hline \hline
+	\multicolumn{2}{r}{\textbf{Total Participants}} & \textbf{127} \\ 
+	
+	\end{tabular}
+	\caption[Participant cohorts]{Participant cohorts, their environments in which the activities were conducted, and the number of participants for each.}
+	\label{tab:cohorts}
+\end{centering}
+\end{table}
+
 
 \subsection{Session Protocol}
+The programming activities served as embedded assessment instruments. To begin, a researcher gave a brief introduction to the concept behind the activity, including making the learning outcome explicit to the students. Each activity consisted of an unfinished App Inventor project for the students to complete, and a paper worksheet for the student to document their work. The Debugging Activity provides an app similar to one the students (largely) had previously worked on, with instructions to fix mistakes in it. The Temperature Activity provides a Celsius/Fahrenheit unit converter app, missing the mathematical expression of the conversion, with instructions for the students to fill in the expression. Both activities were integrated components of the curricula in which they were performed. All activities were allotted a time frame of 30 minutes. During in-class sessions, which each consumed a 40-minute class period, approximately 10 minutes were necessary for classroom management and equipment distribution, so the 30-minute activity fit well. 
+
+Starting approximately halfway through the 30-minute period, researchers were allowed to begin giving hints to students who appeared stuck, and were trained on giving the same set of hints in all instances. The hints were limited to pointing out where the interesting class of block resided in the UI, re-reading questions aloud to promote deeper engagement, and only in the last few minutes, active guidance. 
+
+The students each were given a worksheet that had a special URL link that they typed into their browsers. That URL delivered them to the instrumented version of App Inventor, and automatically inserted the starter file into their account, and opened it for use. The students then had up to 30 minutes to solve the tasks and answer the questions on the worksheet. The students were given tablets, enabling live testing throughout the activity. 
 
 
-\section{Analysis Tools} \label{sec:analysis-plan}
+\subsection{The Debugging Activity}
+All cohorts participated in the debugging activity. Protocol included a short slide show presentation, with interactive questions for the students, to scaffold the idea of debugging and frame the student's assigned task. The scaffolding presentation, description of the starter app, and copy of the worksheet are included in Appendix \ref{sec:IRB:debugging}.
+
+The app was a variant of \emph{Talk To Me,} a common introductory project with App Inventor. All of the students in the summer camp cohorts, and most of the students in the classroom cohorts, had seen \emph{Talk To Me} prior to this activity. The activity design did not require this prerequisite experience, and there was no visible difference in performance among the few students who did not have it. 
+
+The app had three bugs, presented in ascending order of difficulty. The students were instructed not to change any components of the design of the app, and to accept the visible elements as correct. Their changes were only to be limited to the code blocks, which was the case with only minor exception. With this predicate, the screen could be used as a source of information to infer what the app was supposed to do, which was important in identifying and correcting the bugs. The bugs were:
+
+\begin{enumerate}
+\item Mismatch between label ``stop shaking me!'' when shook, and actual spoken text when shook, ``Hello, student.''
+\item Mismatch between what is in the text input box and what was spoken when the button is pressed.
+\item `What was said last' did not update as expected.
+\end{enumerate}
+
+The first bug was easily solved by changing the text literal from ``Hello, student'' to ``stop shaking me.'' The second bug was more nuanced. In previous work with this instrument, researchers discovered that there are two degrees of understanding within the second bug. In the first degree solution, the student modified the text literal within the button click event to match the text on the screen, in effectively the same fashion as the first bug. This makes the second bug appear solved, but only superficially. The second degree solution included the realization that the input box could be changed, and the text to be spoken needed to reference that box as a variable in order to always say the correct text. That solution involved recruiting a new block into the workspace, the input box's contents reference, and replacing the static text with that reference block.
+
+The third bug was the most difficult, and was based on storing data to a variable. It also involved adding an additional \emph{call} block to one of the existing event handlers, which required deeper understanding than the previous two bugs did. %TODO finish up
+
+\subsection{The Temperature Activity}
+
+The temperature activity was designed to elicit expression-building behavior from students, by framing a need for a mathematical conversion. The starter app and worksheet are included in Appendix \ref{sec:IRB:temperature}. Only the summer camp cohorts participated in this activity.
+
+This activity did not have the prior validation work that the debugging activity enjoyed, so less was known about its efficacies. It currently needs improved scaffolding, as during execution of the activity most students struggled to understand what was being asked of them, and as such useful results for the cognitive merit of this activity were limited. But, unexpectedly, this may provide researchers with a rich example set of flailing behavior, as most students were observed to be operating under conditions that are generally indicative of flailing. 
+
+In this activity, students were given a simple one-way temperature converter. An input field was labeled as degrees F, and an output label was labeled as degrees C, with a button separating them labeled `Convert!' The blocks provided a procedure to carry out the numeric conversion from Fahrenheit to Celsius, and students were instructed only to modify that procedure. That instruction was not well received, as it was not sufficiently clear how that procedure was to me modified. 
+
+\section{Assessment}
+
+The debugging activity, as described above, contained four technical subgoals. There were two artifacts produced, the worksheet, which represented the student's self-report on their performance, and the project file itself, the work product. Both artifacts may not necessarily match, as student's self-report may not be accurate to their real degree of accomplishment. In prior studies, students were incorrect in both directions, self-reporting both above and below the degree of their actual success. 
+
+To assess these goals across both artifacts, a code set was developed, seen in Tables \ref{tab:debug-worksheet-codes} and \ref{tab:debug-artifact-codes}. % TODO these can probably be reduced into one table with an extra column.
+
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{lp{13cm}}
+	\multicolumn{2}{l}{Descriptive (coded as a numeric value)} 	\\ \hline
+	IN\# 	& Number of bugs correctly identified (can be any of the problems - must be correct problems)	\\
+	FN\#	& Number of bugs (reportedly) fixed															\\
+	\\
+
+	\multicolumn{2}{l}{Bugs Identified (coded as true or false)} 	\\ \hline
+	ISK 	& Identified shake response text is wrong.	\\
+	IS1		& Identified button speak was wrong 1 -- assessed static text as incorrect					\\
+	IS2		& Identified button speak was wrong 2 -- assessed lack of variable reference to text box		\\
+	ILL		& Identified updating label with last spoken text												\\
+	\\
+
+	\multicolumn{2}{l}{Bugs Fixed (coded as true or false)} 	\\ \hline
+	ISK 	& Fixed shake response text is wrong	\\
+	IS1		& Fixed button speak was wrong 1 -- by changing hard-coded string (or was ambiguous)	\\
+	IS2		& Fixed button speak was wrong 2 -- by referencing (variable) contents of text box	\\
+	ILL		& Fixed updating label with last spoken text											\\
+	\\
+
+	\multicolumn{2}{l}{General identification (coded as true or false)} 	\\ \hline
+	TXT 	& Any mention of text being wrong	\\
+	VAR		& Any mention of variability of input		\\
+
+	\end{tabular}
+	\caption[Worksheet codes for debugging activity]{Worksheet codes for debugging activity, used when inspecting the worksheet filled out and returned by the student.}
+	\label{tab:debug-worksheet-codes}
+\end{centering}
+\end{table}
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{lp{13cm}}
+	\multicolumn{2}{l}{Descriptive (coded as a numeric value)} 	\\ \hline
+	AN\# 	& Number of bugs attempted (any code change pertaining to it)	\\
+	CN\#	& Number of bugs (correctly) fixed														\\
+	\\
+
+	\multicolumn{2}{l}{Bugs Attempted (coded as true or false)} 	\\ \hline
+	ASK 	& Attempt shake response	\\
+	AS1		& Attempt button speak 1 -- no variable, static text only					\\
+	AS2		& Attempt button speak 2 -- variable from text box introduced		\\
+	ALL		& Attempt updating label with last spoken text											\\
+	\\
+
+	\multicolumn{2}{l}{Bugs Fixed (coded as true or false)} 	\\ \hline
+	CSK 	& Fixed shake response text is wrong	\\
+	CS1		& Fixed button speak was wrong 1 -- by changing hard-coded string (or was ambiguous)	\\
+	CS2		& Fixed button speak was wrong 2 -- by referencing (variable) contents of text box	\\
+	CLL		& Fixed updating label with last spoken text											\\
+	\\
+
+	\multicolumn{2}{l}{General identification (coded as true or false)} 	\\ \hline
+	CHG 	& Changed blocks in any way	\\
+
+	\end{tabular}
+	\caption[Work artifact codes for debugging activity]{Work artifact codes for the debugging activity, used when inspecting the student's project file.}
+	\label{tab:debug-artifact-codes}
+\end{centering}
+\end{table}
+
+
+\section{Analysis Tools} \label{sec:analysis-tools}
 
 
 \section{Snapshot Playback}
-Appendix \ref{src:playback.js}
+\label{sec:playback}
+
+A playback system was created to allow researchers to step through the snapshot history of any project. This system afforded the researchers the ability to load a particular snapshot, or frame, increment easily with \emph{next} and \emph{prev} functions, and see at what time the snapshot took place. This system depended on pre-formatted data generated by the analysis tools, where a project's history was encoded as JSON.
+
+To start the playback mechanism, the researcher supplies the \emph{Playback.start} function of the modified version of App Inventor with a file name. The playback module looks for a local web server, fetches that file name, parses the JSON, and returns the control object. The entirety of the module's source code is included in Appendix \ref{src:playback.js}. An example of the system at work is shown in Figure \ref{img:playback}.
+
+\begin{figure}
+  \centering
+      \includegraphics[width=\textwidth]{images/ch3-playback}
+  \caption[Snapshot playback]{The snapshot playback system in action, showing the final frame of a student project, number 59, which took place at time 966 seconds (just over 16 minutes, a fair time for the problem).}
+  \label{img:playback}
+\end{figure}
 
 
 

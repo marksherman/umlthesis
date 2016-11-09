@@ -1,3 +1,46 @@
 %\chapter{Analysis} 
 \chapter{Preliminary Results} % Proposal only
 \label{chap:analysis}
+
+Many of the research questions from Section \ref{sec:problem-statement} were answered in this report. The remaining questions require further analysis, which is an ideal position for a dissertation proposal. 
+
+\section{How can a system be built to snapshot blocks-based programming in App Inventor? }
+The system is described in detail in Section \ref{sec:mod-ai}.
+
+\section{How can captured snapshot data from ephemeral, remote user sessions be securely and consistently housed in a central server? }
+These solutions are described in Sections \ref{sec:server}, \ref{sec:deident}, and \ref{sec:db}.
+
+\section{What is the correct degree of granularity for such snapshot data?}
+This blocks-based language provided many options for granularity. The ideal degree for this study was for every notational change to considered an atom.
+
+\section{What actions by the user in the graphical, blocks-based system are appropriate to trigger a snapshot?}
+To capture data with the ideal granularity, snapshots were triggered when a change was completed. This was implemented with good-enough accuracy by App Inventor's REPL manager, as discussed in Section \ref{sec:mod-ai}.
+
+\section{Can data collected by such a system provide clear representations of student progress in a programming work?}
+The clarity of the collected data is best justified when viewed in live playback, discussed in Section \ref{sec:playback}, where a researcher can easily walk forwards and backwards through the time line of any collected project history. Viewing data in this wasy immediately provided researchers with a strong model of what the student was experiencing. Analytically, the data has already shown to be rich with extractable features appropriate for data mining.
+
+\section{Particular to App Inventor, how can this data be viewed and replayed to give a viewer a real sense of the work?}
+The replay viewer in App Inventor was surprisingly simple to implement, but relied on heavy processing by the analysis software tools to provide the project history in a displayable format. The display mechanism itself leveraged App Inventor's surprising resilience towards the blocks workspace being modified outside of the user's interaction. The system is discussed in detail in Section \ref{sec:playback}.
+
+\section{Are changes in secondary notation (block position and movement) extractable from within snapshot data?}
+Yes, changes that affect secondary notation were extractable and differentiable from changes to primary notation.
+
+\section{What other useful measures are extractable from blocks language snapshots?}
+So far we have found a few interesting new avenues in these data, including a rich source of interaction with \emph{fields,} any free-form text within the project. Fields can be variable or procedure names, text literals, and other inputs hard-coded by the programmer. Changes to fields were quite prevalent in the data, and may provide further insight into the reasoning of the users.
+
+\section{What techniques would be useful for future blocks instrumentation efforts to improve data efficacy?}
+Much of the work of the analysis tools was to reverse engineer what changes occurred from looking at two adjacent snapshots. Future work should avoid this overhead by reporting the conditions of the event triggering the snapshot when it is triggered, so it does not need to be deduced later on. This will be especially important when adapting for real-time detection.
+
+\section{Questions Concerning the Nature of Blocks Programming}
+The remaining research questions are still open, and require further analysis. All of the sources of data required have been collected and validated. The tools to access these questions have been built and tested. What remains is to wield these tools in an exploratory analysis to discover what patterns may exist, determine the strength and reliability of these patterns, and optimize the tools to best access those patterns.
+\begin{itemize}
+\item Can student behavior patterns be detected in snapshot data?
+\item Does a pattern of block movement or manipulation exist that signals that the student is not working productively?
+\item Can the ratio of secondary notation and formal notation changes indicate anything about the programmer?
+\end{itemize}
+
+These questions may be outside the scope of this experiment, and will be reserved for future work:
+\begin{itemize}
+\item Do the counts of measures, such as secondary notation changes, correlate with other independent variables?
+\item Could these patterns and behaviors be detected in real-time?
+\end{itemize}
