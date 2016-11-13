@@ -11,7 +11,7 @@ The system is described in detail in Section \ref{sec:mod-ai}.
 These solutions are described in Sections \ref{sec:server}, \ref{sec:deident}, and \ref{sec:db}.
 
 \section{What is the correct degree of granularity for such snapshot data?}
-This blocks-based language provided many options for granularity. The ideal degree for this study was for every notational change to considered an atom.
+This blocks-based language provided many options for granularity. The ideal degree for this study was for every notational change to be considered an atom.
 
 \section{What actions by the user in the graphical, blocks-based system are appropriate to trigger a snapshot?}
 To capture data with the ideal granularity, snapshots were triggered when a change was completed. This was implemented with good-enough accuracy by App Inventor's REPL manager, as discussed in Section \ref{sec:mod-ai}.
@@ -26,7 +26,7 @@ The replay viewer in App Inventor was surprisingly simple to implement, but reli
 Yes, changes that affect secondary notation were extractable and differentiable from changes to primary notation.
 
 \section{What other useful measures are extractable from blocks language snapshots?}
-So far we have found a few interesting new avenues in these data, including a rich source of interaction with \emph{fields,} any free-form text within the project. Fields can be variable or procedure names, text literals, and other inputs hard-coded by the programmer. Changes to fields were quite prevalent in the data, and may provide further insight into the reasoning of the users.
+So far we have found a few interesting new avenues in these data, including a rich source of interaction with \emph{fields,} any free-form text within the project. Fields can be variable or procedure names, text literals, and other inputs hard-coded by the programmer. Changes to fields were quite prevalent in the data, and may provide further insight.
 
 \section{What techniques would be useful for future blocks instrumentation efforts to improve data efficacy?}
 Much of the work of the analysis tools was to reverse engineer what changes occurred from looking at two adjacent snapshots. Future work should avoid this overhead by reporting the conditions of the event triggering the snapshot when it is triggered, so it does not need to be deduced later on. This will be especially important when adapting for real-time detection.
