@@ -175,71 +175,89 @@ In this activity, students were given a simple one-way temperature converter. An
 
 The debugging activity, as described above, contained four technical subgoals. There were two artifacts produced, the worksheet, which represented the student's self-report on their performance, and the project file itself, the work product. Both artifacts may not necessarily match, as student's self-report may not be accurate to their real degree of accomplishment. In prior studies, students were incorrect in both directions, self-reporting both above and below the degree of their actual success. 
 
-To assess these goals across both artifacts, a code set was developed, seen in Tables \ref{tab:debug-worksheet-codes} and \ref{tab:debug-artifact-codes}. % TODO these can probably be reduced into one table with an extra column.
+%To assess these goals across both artifacts, a code set was developed, seen in Tables \ref{tab:debug-worksheet-codes} and \ref{tab:debug-artifact-codes}. % TODO these can probably be reduced into one table with an extra column.
 
+Measures in data (possible dependent variables)
+	\begin{itemize}
+		\item Blocks Deleted
+		\item Blocks Added
+		\item Blocks Moved in Space
+		\item Blocks Moved in Context (AST change)
+		\item Fields Changed (text fields)
+		\item Block Properties Modified
+		\item Time between snapshots
+		\item Time of snapshot
+	\end{itemize} 
 
-\begin{table}
-\begin{centering}
-	\begin{tabular}{lp{13cm}}
-	\multicolumn{2}{l}{Descriptive (coded as a numeric value)} 	\\ \hline
-	IN\# 	& Number of bugs correctly identified (can be any of the problems - must be correct problems)	\\
-	FN\#	& Number of bugs (reportedly) fixed															\\
-	\\
+Sources of ground truth (independent variables)
+	\begin{itemize}
+		\item Playback analysis
+		\item Student worksheets
+		\item Students of known condition
+	\end{itemize} 
 
-	\multicolumn{2}{l}{Bugs Identified (coded as true or false)} 	\\ \hline
-	ISK 	& Identified shake response text is wrong.	\\
-	IS1		& Identified button speak was wrong 1 -- assessed static text as incorrect					\\
-	IS2		& Identified button speak was wrong 2 -- assessed lack of variable reference to text box		\\
-	ILL		& Identified updating label with last spoken text												\\
-	\\
+% \begin{table}
+% \begin{centering}
+% 	\begin{tabular}{lp{13cm}}
+% 	\multicolumn{2}{l}{Descriptive (coded as a numeric value)} 	\\ \hline
+% 	IN\# 	& Number of bugs correctly identified (can be any of the problems - must be correct problems)	\\
+% 	FN\#	& Number of bugs (reportedly) fixed															\\
+% 	\\
 
-	\multicolumn{2}{l}{Bugs Fixed (coded as true or false)} 	\\ \hline
-	ISK 	& Fixed shake response text is wrong	\\
-	IS1		& Fixed button speak was wrong 1 -- by changing hard-coded string (or was ambiguous)	\\
-	IS2		& Fixed button speak was wrong 2 -- by referencing (variable) contents of text box	\\
-	ILL		& Fixed updating label with last spoken text											\\
-	\\
+% 	\multicolumn{2}{l}{Bugs Identified (coded as true or false)} 	\\ \hline
+% 	ISK 	& Identified shake response text is wrong.	\\
+% 	IS1		& Identified button speak was wrong 1 -- assessed static text as incorrect					\\
+% 	IS2		& Identified button speak was wrong 2 -- assessed lack of variable reference to text box		\\
+% 	ILL		& Identified updating label with last spoken text												\\
+% 	\\
 
-	\multicolumn{2}{l}{General identification (coded as true or false)} 	\\ \hline
-	TXT 	& Any mention of text being wrong	\\
-	VAR		& Any mention of variability of input		\\
+% 	\multicolumn{2}{l}{Bugs Fixed (coded as true or false)} 	\\ \hline
+% 	ISK 	& Fixed shake response text is wrong	\\
+% 	IS1		& Fixed button speak was wrong 1 -- by changing hard-coded string (or was ambiguous)	\\
+% 	IS2		& Fixed button speak was wrong 2 -- by referencing (variable) contents of text box	\\
+% 	ILL		& Fixed updating label with last spoken text											\\
+% 	\\
 
-	\end{tabular}
-	\caption[Worksheet codes for debugging activity]{Worksheet codes for debugging activity, used when inspecting the worksheet filled out and returned by the student.}
-	\label{tab:debug-worksheet-codes}
-\end{centering}
-\end{table}
+% 	\multicolumn{2}{l}{General identification (coded as true or false)} 	\\ \hline
+% 	TXT 	& Any mention of text being wrong	\\
+% 	VAR		& Any mention of variability of input		\\
 
-\begin{table}
-\begin{centering}
-	\begin{tabular}{lp{13cm}}
-	\multicolumn{2}{l}{Descriptive (coded as a numeric value)} 	\\ \hline
-	AN\# 	& Number of bugs attempted (any code change pertaining to it)	\\
-	CN\#	& Number of bugs (correctly) fixed														\\
-	\\
+% 	\end{tabular}
+% 	\caption[Worksheet codes for debugging activity]{Worksheet codes for debugging activity, used when inspecting the worksheet filled out and returned by the student.}
+% 	\label{tab:debug-worksheet-codes}
+% \end{centering}
+% \end{table}
 
-	\multicolumn{2}{l}{Bugs Attempted (coded as true or false)} 	\\ \hline
-	ASK 	& Attempt shake response	\\
-	AS1		& Attempt button speak 1 -- no variable, static text only					\\
-	AS2		& Attempt button speak 2 -- variable from text box introduced		\\
-	ALL		& Attempt updating label with last spoken text											\\
-	\\
+% \begin{table}
+% \begin{centering}
+% 	\begin{tabular}{lp{13cm}}
+% 	\multicolumn{2}{l}{Descriptive (coded as a numeric value)} 	\\ \hline
+% 	AN\# 	& Number of bugs attempted (any code change pertaining to it)	\\
+% 	CN\#	& Number of bugs (correctly) fixed														\\
+% 	\\
 
-	\multicolumn{2}{l}{Bugs Fixed (coded as true or false)} 	\\ \hline
-	CSK 	& Fixed shake response text is wrong	\\
-	CS1		& Fixed button speak was wrong 1 -- by changing hard-coded string (or was ambiguous)	\\
-	CS2		& Fixed button speak was wrong 2 -- by referencing (variable) contents of text box	\\
-	CLL		& Fixed updating label with last spoken text											\\
-	\\
+% 	\multicolumn{2}{l}{Bugs Attempted (coded as true or false)} 	\\ \hline
+% 	ASK 	& Attempt shake response	\\
+% 	AS1		& Attempt button speak 1 -- no variable, static text only					\\
+% 	AS2		& Attempt button speak 2 -- variable from text box introduced		\\
+% 	ALL		& Attempt updating label with last spoken text											\\
+% 	\\
 
-	\multicolumn{2}{l}{General identification (coded as true or false)} 	\\ \hline
-	CHG 	& Changed blocks in any way	\\
+% 	\multicolumn{2}{l}{Bugs Fixed (coded as true or false)} 	\\ \hline
+% 	CSK 	& Fixed shake response text is wrong	\\
+% 	CS1		& Fixed button speak was wrong 1 -- by changing hard-coded string (or was ambiguous)	\\
+% 	CS2		& Fixed button speak was wrong 2 -- by referencing (variable) contents of text box	\\
+% 	CLL		& Fixed updating label with last spoken text											\\
+% 	\\
 
-	\end{tabular}
-	\caption[Work artifact codes for debugging activity]{Work artifact codes for the debugging activity, used when inspecting the student's project file.}
-	\label{tab:debug-artifact-codes}
-\end{centering}
-\end{table}
+% 	\multicolumn{2}{l}{General identification (coded as true or false)} 	\\ \hline
+% 	CHG 	& Changed blocks in any way	\\
+
+% 	\end{tabular}
+% 	\caption[Work artifact codes for debugging activity]{Work artifact codes for the debugging activity, used when inspecting the student's project file.}
+% 	\label{tab:debug-artifact-codes}
+% \end{centering}
+% \end{table}
 
 
 \section{Analysis Tools} \label{sec:analysis-tools}

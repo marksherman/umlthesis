@@ -31,5 +31,6 @@ main.pdf
 *.vrb
 *.xdy
 *.tdo
+*.lol
 .DS_Store
 _minted-main
