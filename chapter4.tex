@@ -40,21 +40,28 @@ The presence of such corruptions were indicative of a bug in the extraction of t
 
 The two above corruptions were easily mitigated. A third mode of corruption, however, resulted in properly formed XML, but potentially erroneous data. This mode was characterized by multiple changes happening in a single snapshot, which should have been extremely rare, as each snapshot was triggered by an atomic action in the editor. There was a small amount of event caching, as discussed in Section \ref{sec:mod-ai}, however the resolution was sufficient to capture individual character strokes while typing into text fields, indicating that speed was sufficient to separate any user change. One project was particularly egregious, and showed this corruption in 71 of its 245 commits, rendering nearly a third of its data unreliable. That project was removed, which left only 50 such potential errors in the remainder of the database, many of which were mitigated by text field accumulator, described in Section \ref{sec:text-acc}. The total percentage of potentially erroneous snapshots in the debugging activity dataset was 0.84\%, and only 0.7\% remained potentially unmitigated. These are summarized in Table \ref{tab:data-corruption}.
 
-
+% Debug:		empty blocks - 3 (now, many were hand-fixed, notes may indicate more)
+%				junk past tag - 7 (now, many were hand-fixed, notes may indicate more)
+%			6890 snapshots total
+% Temperature:	empty blocks - 1 
+%				junk past tag - 4 
+%			2296 snapshots total
+	
 \begin{table}
 \begin{centering}
 	\begin{tabular}{l l p{5.4cm}}
 	Corruption Mode & Number of Instances & Mitigation Strategy \\ \hline
 	Empty block file & 3 (0.04\%) & snapshot deleted \\
 	Junk beyond \mintinline{xml}|</xml>| & 7 (0.1\%) & junk trimmed, snapshot kept \\
-	Multiple changes & 121, 71 from one project & That project was removed, leaving 50 (0.7\%) 
+	Multiple changes & 121, 71 from one project & That project was removed, leaving 50 (0.7\%) \\
+	Multi-session & at least 1 & Reduce to the first session only, based on time differences % TODO this is still in progress
 	\end{tabular}
 	\caption[Data corruption modes]{Data corruption modes, their prevalence, and mitigation strategy.}
 	\label{tab:data-corruption}
 \end{centering}
 \end{table}
 
-A data consistency bug was found with multiple sessions. If a project was opened in a second, disjoint session, such as the following day, the block ID numbers change, causing the feature extractors to falsely over-report blocks being deleted and added, when really the same blocks have been re-numbered by app inventor.
+A data consistency bug was found where a project was opened over more than one session. If a project was opened in a second, disjoint session, such as the following day, the block ID numbers change, causing the feature extractors to falsely over-report blocks being deleted and added, when really the same blocks have been re-numbered by App Inventor. The strategy employed was to check every project for a large time interval, far beyond the allotted time for the activities, and delete snapshots beyond the large interval. % TODO make sure you actually do this
 
 \section{Text Field Change Accumulator}
 \label{sec:text-acc}
