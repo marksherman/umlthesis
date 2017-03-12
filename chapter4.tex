@@ -1,113 +1,56 @@
-\chapter{Analysis} 
-\label{chap:analysis}
-Debugging activity had 6890 snapshots over 119 projects. The temperature activity had 2296 snapshots over 35 projects.
+%\section{Analysis} % TODO turn this back into a chapter for the final dissertation
 
-The features extracted from the snapshots:
-\begin{itemize}
-	\item Blocks Deleted
-	\item Blocks Added
-	\item Blocks Moved in Space
-	\item Blocks Moved in Context (AST change)
-	\item Fields Changed (text fields)
-	\item Block Properties Modified
-	\item Time between snapshots (interval)
-	\item Time of snapshot
-\end{itemize} 
 
-\section{Data Consistency and Cleanliness}
-Some forms of corruption were found in snapshot blocks files. The first two involved patterned corruption of the block file: empty block file and malformed XML. Rarely, a snapshot had no contents for the blocks file. In the entire collection of debugging activity snapshots ($n = 6890$), only three snapshots had empty blocks. These snapshots were removed. The malformed XML files contained text beyond the closing XML tag, which crashed the XML parser. Within the debugging activities, only seven snapshots had this malformation, which was easily corrected by trimming the excess text. It was noteworthy in those cases that the junk excess text was a repetition of the last characters of the file, as seen in Listing \ref{list:badxmltrailing}. 
+% \section{Data Consistency and Cleanliness}
+% Some forms of corruption were found in snapshot blocks files. The first two involved patterned corruption of the block file: empty block file and malformed XML. Rarely, a snapshot had no contents for the blocks file. In the entire collection of debugging activity snapshots ($n = 6890$), only three snapshots had empty blocks. These snapshots were removed. The malformed XML files contained text beyond the closing XML tag, which crashed the XML parser. Within the debugging activities, only seven snapshots had this malformation, which was easily corrected by trimming the excess text. It was noteworthy in those cases that the junk excess text was a repetition of the last characters of the file, as seen in Listing \ref{list:badxmltrailing}. 
 
-The presence of such corruptions were indicative of a bug in the extraction of the block data from blockly in the browser. It was possible that the snapshot mechanism was able to capture the XML file while it was in an inconsistent state, such as mid-write. 
+% The presence of such corruptions were indicative of a bug in the extraction of the block data from blockly in the browser. It was possible that the snapshot mechanism was able to capture the XML file while it was in an inconsistent state, such as mid-write. 
 
-\begin{listing}
-\begin{minted}[breaklines]{xml}
-  <block type="component_set_get" id="3" x="579" y="277">
-    <mutation component_type="TextBox" set_or_get="get" property_name="Text" is_generic="false" instance_name="TextBox1_UserInput"></mutation>
-    <field name="COMPONENT_SELECTOR">TextBox1_UserInput</field>
-    <field name="PROP">Text</field>
-  </block>
-  <yacodeblocks ya-version="159" language-version="20"></yacodeblocks>
-</xml> <mutation component_type="TextBox" set_or_get="set" property_name="Text" is_generic="false" instance_name="TextBox1_UserInput"></mutation>
-    <field name="COMPONENT_SELECTOR">TextBox1_UserInput</field>
-    <field name="PROP">Text</field>
-  </block>
-  <yacodeblocks ya-version="159" language-version="20"></yacodeblocks>
-</xml>
-\end{minted}
-\caption[Extra XML beyond the closing tag]{Extra XML where the last segment of text is repeated beyond the closing tag.}
-\label{list:badxmltrailing}
-\end{listing}
+% \begin{listing}
+% \begin{minted}[breaklines]{xml}
+%   <block type="component_set_get" id="3" x="579" y="277">
+%     <mutation component_type="TextBox" set_or_get="get" property_name="Text" is_generic="false" instance_name="TextBox1_UserInput"></mutation>
+%     <field name="COMPONENT_SELECTOR">TextBox1_UserInput</field>
+%     <field name="PROP">Text</field>
+%   </block>
+%   <yacodeblocks ya-version="159" language-version="20"></yacodeblocks>
+% </xml> <mutation component_type="TextBox" set_or_get="set" property_name="Text" is_generic="false" instance_name="TextBox1_UserInput"></mutation>
+%     <field name="COMPONENT_SELECTOR">TextBox1_UserInput</field>
+%     <field name="PROP">Text</field>
+%   </block>
+%   <yacodeblocks ya-version="159" language-version="20"></yacodeblocks>
+% </xml>
+% \end{minted}
+% \caption[Extra XML beyond the closing tag]{Extra XML where the last segment of text is repeated beyond the closing tag.}
+% \label{list:badxmltrailing}
+% \end{listing}
 
-The two above corruptions were easily mitigated. A third mode of corruption, however, resulted in properly formed XML, but potentially erroneous data. This mode was characterized by multiple changes happening in a single snapshot, which should have been extremely rare, as each snapshot was triggered by an atomic action in the editor. There was a small amount of event caching, as discussed in Section \ref{sec:mod-ai}, however the resolution was sufficient to capture individual character strokes while typing into text fields, indicating that speed was sufficient to separate any user change. One project was particularly egregious, and showed this corruption in 71 of its 245 commits, rendering nearly a third of its data unreliable. That project was removed, which left only 50 such potential errors in the remainder of the database, many of which were mitigated by text field accumulator, described in Section \ref{sec:text-acc}. The total percentage of potentially erroneous snapshots in the debugging activity dataset was 0.84\%, and only 0.7\% remained potentially unmitigated. These are summarized in Table \ref{tab:data-corruption}.
+% The two above corruptions were easily mitigated. A third mode of corruption, however, resulted in properly formed XML, but potentially erroneous data. This mode was characterized by multiple changes happening in a single snapshot, which should have been extremely rare, as each snapshot was triggered by an atomic action in the editor. There was a small amount of event caching, %as discussed in Section \ref{sec:mod-ai},
+%  however the resolution was sufficient to capture individual character strokes while typing into text fields, indicating that speed was sufficient to separate any user change. One project was particularly egregious, and showed this corruption in 71 of its 245 commits, rendering nearly a third of its data unreliable. That project was removed, which left only 50 such potential errors in the remainder of the database, many of which were mitigated by text field accumulator, described in Section \ref{sec:text-acc}. The total percentage of potentially erroneous snapshots in the debugging activity dataset was 0.84\%, and only 0.7\% remained potentially unmitigated. These are summarized in Table \ref{tab:data-corruption}.
 
-% Debug:		empty blocks - 3 (now, many were hand-fixed, notes may indicate more)
-%				junk past tag - 7 (now, many were hand-fixed, notes may indicate more)
-%			6890 snapshots total
-% Temperature:	empty blocks - 1 
-%				junk past tag - 4 
-%			2296 snapshots total
+% % Debug:		empty blocks - 3 (now, many were hand-fixed, notes may indicate more)
+% %				junk past tag - 7 (now, many were hand-fixed, notes may indicate more)
+% %			6890 snapshots total
+% % Temperature:	empty blocks - 1 
+% %				junk past tag - 4 
+% %			2296 snapshots total
 	
-\begin{table}
-\begin{centering}
-	\begin{tabular}{l l p{5.4cm}}
-	Corruption Mode & Number of Instances & Mitigation Strategy \\ \hline
-	Empty block file & 3 (0.04\%) & snapshot deleted \\
-	Junk beyond \mintinline{xml}|</xml>| & 7 (0.1\%) & junk trimmed, snapshot kept \\
-	Multiple changes & 121, 71 from one project & That project was removed, leaving 50 (0.7\%) \\
-	Multi-session & at least 1 & Reduce to the first session only, based on time differences % TODO this is still in progress
-	\end{tabular}
-	\caption[Data corruption modes]{Data corruption modes, their prevalence, and mitigation strategy.}
-	\label{tab:data-corruption}
-\end{centering}
-\end{table}
+% \begin{table}
+% \begin{centering}
+% 	\begin{tabular}{l l p{5.4cm}}
+% 	Corruption Mode & Number of Instances & Mitigation Strategy \\ \hline
+% 	Empty block file & 3 (0.04\%) & snapshot deleted \\
+% 	Junk beyond \mintinline{xml}|</xml>| & 7 (0.1\%) & junk trimmed, snapshot kept \\
+% 	Multiple changes & 121, 71 from one project & That project was removed, leaving 50 (0.7\%) \\
+% 	Multi-session & at least 1 & Reduce to the first session only, based on time differences % TODO this is still in progress
+% 	\end{tabular}
+% 	\caption[Data corruption modes]{Data corruption modes, their prevalence, and mitigation strategy.}
+% 	\label{tab:data-corruption}
+% \end{centering}
+% \end{table}
 
-A data consistency bug was found where a project was opened over more than one session. If a project was opened in a second, disjoint session, such as the following day, the block ID numbers change, causing the feature extractors to falsely over-report blocks being deleted and added, when really the same blocks have been re-numbered by App Inventor. The strategy employed was to check every project for a large time interval, far beyond the allotted time for the activities, and delete snapshots beyond the large interval. % TODO make sure you actually do this
+% A data consistency bug was found where a project was opened over more than one session. If a project was opened in a second, disjoint session, such as the following day, the block ID numbers change, causing the feature extractors to falsely over-report blocks being deleted and added, when really the same blocks have been re-numbered by App Inventor. The strategy employed was to check every project for a large time interval, far beyond the allotted time for the activities, and delete snapshots beyond the large interval. % TODO make sure you actually do this
 
-\section{Text Field Change Accumulator}
-\label{sec:text-acc}
+% \section{Text Field Change Accumulator}
+% \label{sec:text-acc}
 
-\chapter{Preliminary Results} % Proposal only
-
-
-Many of the research questions from Section \ref{sec:problem-statement} were answered in this report. The remaining questions require further analysis, which is an ideal position for a dissertation proposal. 
-
-\section{How can a system be built to snapshot blocks-based programming in App Inventor? }
-The system is described in detail in Section \ref{sec:mod-ai}.
-
-\section{How can captured snapshot data from ephemeral, remote user sessions be securely and consistently housed in a central server? }
-These solutions are described in Sections \ref{sec:server}, \ref{sec:deident}, and \ref{sec:db}.
-
-\section{What is the correct degree of granularity for such snapshot data?}
-This blocks-based language provided many options for granularity. The ideal degree for this study was for every notational change to be considered an atom.
-
-\section{What actions by the user in the graphical, blocks-based system are appropriate to trigger a snapshot?}
-To capture data with the ideal granularity, snapshots were triggered when a change was completed. This was implemented with good-enough accuracy by App Inventor's REPL manager, as discussed in Section \ref{sec:mod-ai}.
-
-\section{Can data collected by such a system provide clear representations of student progress in a programming work?}
-The clarity of the collected data is best justified when viewed in live playback, discussed in Section \ref{sec:playback}, where a researcher can easily walk forwards and backwards through the time line of any collected project history. Viewing data in this wasy immediately provided researchers with a strong model of what the student was experiencing. Analytically, the data has already shown to be rich with extractable features appropriate for data mining.
-
-\section{Particular to App Inventor, how can this data be viewed and replayed to give a viewer a real sense of the work?}
-The replay viewer in App Inventor was surprisingly simple to implement, but relied on heavy processing by the analysis software tools to provide the project history in a displayable format. The display mechanism itself leveraged App Inventor's surprising resilience towards the blocks workspace being modified outside of the user's interaction. The system is discussed in detail in Section \ref{sec:playback}.
-
-\section{Are changes in secondary notation (block position and movement) extractable from within snapshot data?}
-Yes, changes that affect secondary notation were extractable and differentiable from changes to primary notation.
-
-\section{What other useful measures are extractable from blocks language snapshots?}
-So far we have found a few interesting new avenues in these data, including a rich source of interaction with \emph{fields,} any free-form text within the project. Fields can be variable or procedure names, text literals, and other inputs hard-coded by the programmer. Changes to fields were quite prevalent in the data, and may provide further insight.
-
-\section{What techniques would be useful for future blocks instrumentation efforts to improve data efficacy?}
-Much of the work of the analysis tools was to reverse engineer what changes occurred from looking at two adjacent snapshots. Future work should avoid this overhead by reporting the conditions of the event triggering the snapshot when it is triggered, so it does not need to be deduced later on. This will be especially important when adapting for real-time detection.
-
-\section{Questions Concerning the Nature of Blocks Programming}
-The remaining research questions are still open, and require further analysis. All of the sources of data required have been collected and validated. The tools to access these questions have been built and tested. What remains is to wield these tools in an exploratory analysis to discover what patterns may exist, determine the strength and reliability of these patterns, and optimize the tools to best access those patterns.
-\begin{itemize}
-\item Can student behavior patterns be detected in snapshot data?
-\item Does a pattern of block movement or manipulation exist that signals that the student is not working productively?
-\item Can the ratio of secondary notation and formal notation changes indicate anything about the programmer?
-\end{itemize}
-
-These questions may be outside the scope of this experiment, and will be reserved for future work:
-\begin{itemize}
-\item Do the counts of measures, such as secondary notation changes, correlate with other independent variables?
-\item Could these patterns and behaviors be detected in real-time?
-\end{itemize}
