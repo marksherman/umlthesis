@@ -117,9 +117,10 @@ An example of the system at work is shown in Figure \ref{img:playback}. The cont
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{images/ch3-playback}
-  \caption[Snapshot playback]{The snapshot playback system in action, showing the final frame of a student project, number 59, which took place at time 966 seconds (just over 16 minutes, a fair time for the problem).}
+  \caption[Snapshot playback]{The snapshot playback system in action, showing the final frame of a student project, number 43, which took place at time 16 minutes and 6 seconds, a fair time for the problem. The ``Research Tools'' window contains the snapshot playback controls.}
   \label{img:playback}
 \end{figure}
+% Note: this image made with data d/AcapulcoDeer
 
 
 
@@ -170,8 +171,8 @@ All cohorts participated in the debugging activity. Protocol included a short sl
 
 \begin{figure}
   \centering
-      \includegraphics{images/debugActivity/debug-screen}
-  \caption[The Debugging Activity app screen]{The Debugging Activity app screen.}
+      \includegraphics[width=\textwidth]{images/debugActivity/debug-designer}
+  \caption[The Debugging Activity designer view]{The Debugging Activity app screen in the App Inventor designer.}
   \label{fig:debug-screen}
 \end{figure}
 
@@ -185,15 +186,15 @@ The app was a variant of \emph{Talk To Me,} a common introductory project with A
 \end{figure}
 
 
-The app had three bugs, presented in ascending order of difficulty. The students were instructed not to change any components of the design of the app, and to accept the visible elements as correct. Their changes were only to be limited to the code blocks, which was the case with only minor exception. With this predicate, the screen could be used as a source of information to infer what the app was supposed to do, which was important in identifying and correcting the bugs. The bugs were:
+The app had three bugs, presented in ascending order of difficulty. The students were instructed not to change any components of the design of the app. Their changes were only to be limited to the code blocks, which was the case with only minor exception. With this predicate, the screen could be used as a source of information to infer what the app was supposed to do, which was important in identifying and correcting the bugs. The bugs were:
 
 \begin{enumerate}
-\item Mismatch between label ``stop shaking me!'' and the actual spoken text when shaken, ``Hello, student.''
+\item Mismatch between label ``stop shaking me!'' and the actual spoken text when shaken, ``the wheels on the bus''
 \item Mismatch between what is in the text input box and what was spoken when the button is pressed.
 \item `What was said last' did not update as expected.
 \end{enumerate}
 
-The first bug was easily solved by changing the text literal from ``Hello, student'' to ``stop shaking me,'' as seen in Figure \ref{fig:debug1}. The second bug was more nuanced. In previous work with this instrument, researchers discovered that there were two degrees of understanding within the second bug. In the first degree solution, the student modified the text literal within the button click event to match the text on the screen, in effectively the same fashion as the first bug (also shown in Figure \ref{fig:debug1}). This solution made the second bug appear solved, but only superficially. The second degree solution included the realization that the input box could be changed, and the text to be spoken needed to reference that box as a variable in order to always say the correct text. That solution involved recruiting a new block into the workspace, the input box's contents reference, and replacing the static text with that reference block. This solution is shown in Figure \ref{fig:debug2}.
+The first bug was easily solved by changing the text literal from ``the wheels on the bus'' to ``stop shaking me,'' as seen in Figure \ref{fig:debug1}. The second bug was more nuanced. In previous work with this instrument, researchers discovered that there were two degrees of understanding within the second bug. In the first degree solution, the student modified the text literal within the button click event to match the text on the screen, in effectively the same fashion as the first bug (also shown in Figure \ref{fig:debug1}). This solution made the second bug appear solved, but only superficially. The second degree solution required the realization that the input box could be changed, and the text to be spoken needed to reference that box as a variable in order to always say the correct text. This concept was modeled in the previous exposure to the \emph{Talk To Me} app. The solution involved recruiting a new block into the workspace, the input box's contents reference, and replacing the static text with that reference block. This solution is shown in Figure \ref{fig:debug2}. Making the realization and recruiting the additional block to execute it made this solution more challenging.
 
 \begin{figure}
   \centering
@@ -216,15 +217,15 @@ The first bug was easily solved by changing the text literal from ``Hello, stude
   \label{fig:debug3}
 \end{figure}
 
-The third bug was the most difficult, and was based on storing data to a label as a variable. It involved adding an additional \emph{set} block to one of the existing event handlers, which required deeper understanding than the previous two bugs did. The solution is shown in Figure \ref{fig:debug3}. Less than half of the students attempted to solve this bug.
+The third bug was the most difficult, and was based on storing data to a label component. It involved adding an additional \emph{set} block to one of the existing event handlers, which required deeper understanding than the previous two bugs did. The solution is shown in Figure \ref{fig:debug3}. Less than half of the students attempted to solve this bug.
 
 
 \subsection{The Temperature Activity}
 
 \begin{figure}
   \centering
-      \includegraphics{images/temperatureActivity/temperature-screen}
-  \caption[The Temperature Activity app screen]{The Temperature Activity app screen.}
+      \includegraphics[width=\textwidth]{images/temperatureActivity/temperature-designer}
+  \caption[The Temperature Activity app designer view]{The Temperature Activity app screen in the App Inventor designer.}
   \label{fig:temperature-screen}
 \end{figure}
 
