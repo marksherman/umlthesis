@@ -1,17 +1,4 @@
 \chapter{Discussion}
-
-\section{Hypothetical Causes for Flailing Behavior}
-%TODO this paragraph must belong somewhere...
-Upon identifying instances of flailing behavior, the question will turn to what may be causing it, and more importantly, what educators can do to better improve learning in their classrooms. There were a few interesting previous studies that may be assembled to form a hypothesis. 
-
-A student's degree of comfort in the classroom has been shown to be factor in CS1 undergrad success \citep{wilson-2002}. Comfort level was measured by a collection of factors, revolving around likelihood to ask questions (demonstrating comfort) and signs of anxiety (demonstrating discomfort). That study also found a significant factor was \emph{attribution to luck,} but it was a negative parameter. Many students, for reasons unclear, blamed their successes or failures on the unstable attribute of luck. Whether they chose to do this for failure or success correlated with different mental attitudes towards their self-efficacy. If a student was unhappy with their score, and attributed their failures to luck, it provided motivation to continue trying. However, attribution to luck in either direction had a strong negative impact on their scores ($p=0.233$). This may be a parameter that contributes to the flailing behavior, as it could be interpreted as not taking responsibility for the success or failure of the program. 
-
-``Gaming the system,'' a behavior seen in intelligent tutoring or feedback systems, showed students trying to abuse the system itself, within its rules, to achieve a correct answer without engaging with the educational material itself \citep{baker2004off}. This behavior showed a strong effect on learning outcomes, even when controlled for the student's previous knowledge, at $p<0.01$ with a partial correlation of $-0.34$. Discussion on why this gaming behavor emerged revolved around the student's focus on performance outcome rather than learning. Playing the game to win the points, and not to learn the content in the game, may have resulted a desire to ``gaming the system,'' to succeed at the task without succeeding in the mission of the task. This mindset of performance has been correlated with \emph{executive help seeking} behavior, where students ask for help immediately without first engaging with or attempting to solve the problem \citep{arbreton1998student}. That behavior bore resemblance both in outcome and motivation to system-gaming, and \citeauthor{baker2004off} asserted both may be related to learned helplessness, which carries a characteristic of missatribution of failures. Many ``helpless'' students mis-attributed their early failures to a lack of aptitude, as a personal trait, and then avoided difficult challenges and learning opportunities \citep{dweck1988social}. 
-
-Both \citeauthor{wilson-2002} and \citeauthor{baker2004off} propose misattributions of failure and success as strong parts of a students' motivation to engage or disconnect with a problem. In this study, students could do both-- flailing appeared to be on-task, but uninformed. The question of the student asks themselves as to how to approach a problem when stuck will require further work. This sort of misattribution, both personally and socially, is interesting to the author.
-
-Students working in App Inventor have often been observed doing unproductive tinkering, similar to that observed by \citet{perkins-1986}. One hypothesis as to why App Inventor does this can be made with the help of the Cognitive Dimensions Framework \citep{blackwell-2003}. In App Inventor, poor planning of block layout by a novice can result in increased viscosity, where the program becomes increasingly difficult to modify. Increased viscosity, we hypothesize, may result in tinkering behavior, as it adds time and cognitive load to the user's task. Further investigation along this line is reserved for future work.
-
 	
 %\section{Conclusions}
 
@@ -21,17 +8,14 @@ Students working in App Inventor have often been observed doing unproductive tin
 % We do not recommend using git as a database. Further recommendaitons of legitimate scientific and educational merit will be added as part of the full dissertation.
 
 
- \section{Future Work, beyond this dissertation} % TODO reduce to just "future work" after proposal
+\section{Future Work, beyond this dissertation} % TODO reduce to just "future work" after proposal
 \label{sec:futurework}
-
-% This section entails work that may be conducted beyond the dissertation, and will included, sans this sentence, in the final thesis document as well as here in the proposal.
-
-% % Copied straight from chap 2 for the moment, but needs to be mentioned. good stuff.
-As \citet{petre-2006} observed, experts and novices write and read secondary notation in different ways, and in App Inventor, poor planning of that secondary notation by a novice can result in increased viscosity. Increased viscosity, we hypothesize, may result in tinkering behavior, as it adds time and cognitive load to the user's task. Further investigation along this line is reserved for future work.
-
-Better fine-grain collection of snapshot data. In this work, the entire project was captured on every change, which created a need to reverse-engineer what changes occured between snapshots post-facto. Upcoming updates to Blockly will allow for easier access to succinct event descriptions, potentially allowing only the changes themselves to be sent, effectively reducing the transmission payload and increasing transparency of collected data. Such improvements can make future collection experiments easier, and provide data that is richer for analysis, with no loss in accuracy. 
 
 As previously mentioned, there is ample future work to be done in understanding the reasoning behind behavior choices, with particular support to misattribution of failure and success. Investigation into this misattribution should be conducted, to use traditional methods of assessing student mindset combined with the power of fine-grain snapshot analysis. 
 
+\subsection{Better fine-grain collection of snapshot data} 
+In this work, the entire project was captured on every change, which created a need to reverse-engineer what changes occured between snapshots post-facto. Upcoming updates to Blockly will allow for easier access to succinct event descriptions, potentially allowing only the changes themselves to be sent, effectively reducing the transmission payload and increasing transparency of collected data. Such improvements can make future collection experiments easier, and provide data that is richer for analysis, with no loss in accuracy. 
+
+\subsection{Novice and Expert Behaviors}
 There is also work to be done in assessing expert and novice usage patterns using snapshot analysis. \cite{petre-1995} outlined a strong difference in reading and authoring skills pertaining to secondary notation between expert and novice users. Teaching App Inventor, like any language, includes showing patterns that are good standards of practice, in hopes of the student developing more expert skills. Those patterns are not yet based on scientific observation of expert and novice programming behaviors. Snapshot analysis may be critical to provide insight into expert patterns, which could then be disseminated to enhance teaching practice. 
 
