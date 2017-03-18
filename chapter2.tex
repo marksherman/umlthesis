@@ -1,6 +1,32 @@
 \chapter{Background}
 \label{chap:background}
 
+Previous studies have used fine-grain instrumentation to dive into previously inaccessible student behaviors. These studies varied widely, from the discovery of phases of development over a project \citep{berland-2013, martin2013nanogenetic}, to analysis of off-task behavior in learning \citep{baker2004off}. Some have presented methods for identifying struggling students \cite{piech-2012}, and others develop well-informed assessments \citep{werner2012fairy}. All of them had commonalities: building models of learning by looking at fine-grain behavior data, observing small changes in work over time, filling in the stories that led up to the final artifacts. Examining the process of programming rather than the final products can uncover interesting behavior about student learning, and such patterns may have better predictive power than in-class exams \citep{blikstein2014}.
+
+Analysis of this data was informed by previous studies of student behavior in programming, math, and other activities. \cite{perkins-1986} identified and classified types of behaviors students exhibit when they encounter difficulty in programming. Off-task behavior, to which flailing may be related, has also been studied, such as \cite{baker2004off} did, in the context of mathematics. 
+
+This study relates closely to learning pathways, especially those identified by learning analytics \citep{martin2013nanogenetic}. 
+
+The activities conducted for data collection revolved around debugging, as debugging has been shown to be a compelling mechanism to drive engagement with a short programming task \citep{webb2010troubleshooting}.
+
+A more extensive discussion of related work is presented below.
+
+
+\section{A Brief History of Learning Theory}
+\label{sec:learning-theory}
+Piaget, ZPD, etc etc
+Also introduce Orchestration
+...
+Maintaining each students' current position within their zone of proximal development is a critical goal of orchestration, which will be further discussed in Section \ref{sec:teacher-dashboards}.
+%TODO this is a stub
+
+
+\section{Visual Languages}
+\label{sec:visual-languages}
+
+Much of the literature concerning programming efficacy was done at a time when visual languages were emerging as a purported panacea of usefulness \citep{shu-1988}, but with little empirical evidence to substantiate those claims \citep{petre-1995}. \citeauthor{sch-1980} made such an accusation, ``Computer scientists... make broad claims for the simplicity, naturalness, or ease-of-use of new computer languages or techniques, but do not take advantage of the opportunity for experimental confirmation'' (\citeyear{sch-1980}). \citeauthor{stefik2014programming} strongly argued that these ``language wars'' are a significant problem to science, and as stewards of computation, it is the language resarchers who must study the imact of language designs on people (\citeyear{stefik2014programming}). Speaking of diagram-based visual languages, \citet{blackwell-2001} offered a challenge to researchers to support their claims of intuition through visual programming, ``...to explain why this intuition may be valid, and to propose the ways in which, if it is valid, it can most be effectively exploited.'' This work hopes to shed some light into the domain illustrated by that challenge. 
+
+
 \section{App Inventor}
 \label{sec:app-inventor-background}
 App Inventor is an online development environment to build Android apps, employing a drag-and-drop designer and graphical, blocks-based code editing. App Inventor follows in the tradition of Constructionism \citep{papert1991situating}, which covers a wide class of discovery-based pedagogical vehicles. App Inventor is also deeply influenced by Scratch \citep{resnick2009scratch}, and offers low barriers for entry, high ceilings of capability, and a built-in library of powerful abstractions.
@@ -14,10 +40,6 @@ The App Inventor language and runtime uses a purely event-driven programming mod
   \label{fig:debug0ch2}
 \end{figure}
 
-\section{Visual Languages}
-\label{sec:visual-languages}
-
-Much of the literature concerning programming efficacy was done at a time when visual languages were emerging as a purported panacea of usefulness \citep{shu-1988}, but with little empirical evidence to substantiate those claims \citep{petre-1995}. \citeauthor{sch-1980} made such an accusation, ``Computer scientists... make broad claims for the simplicity, naturalness, or ease-of-use of new computer languages or techniques, but do not take advantage of the opportunity for experimental confirmation'' (\citeyear{sch-1980}). \citeauthor{stefik2014programming} strongly argued that these ``language wars'' are a significant problem to science, and as stewards of computation, it is the language resarchers who must study the imact of language designs on people (\citeyear{stefik2014programming}). Speaking of diagram-based visual languages, \citet{blackwell-2001} offered a challenge to researchers to support their claims of intuition through visual programming, ``...to explain why this intuition may be valid, and to propose the ways in which, if it is valid, it can most be effectively exploited.'' This work hopes to shed some light into the domain illustrated by that challenge. 
 
 %\subsection{Cognitive Dimensions of Notations} 
 \label{sec:CDs}
@@ -91,8 +113,9 @@ Building instrumentation into an IDE is a method to ``get inside'' the process s
 \citet{piech-2012} took a very straightforward approach to generating in-progress data. They modified the development environment used in a CS1 course to take a \emph{snapshot} every time the student compiled their code. This snapshot was a complete version of the program at that time. Every snapshot was committed to a local git repository, so that at the end of the assignment the repository contained a full history of the project's code, from the very first words typed to completion. Recording snapshots on every save was a logical choice, as it was a good indication that the student had something they deemed ready for evaluation. \citet{lipman-phd} did similarly with his instrumentation in LearnCS, where snapshots were captured to a git repository on every save and run (where run effectively included compile). These studies looked at projects in Java and C respectively, which are languages that use the same write-compile-run model. Other languages, such as App Inventor, do not, and require different semantics as to when a snapshot should be triggered.
 
 
-%\section{Teacher Dashboards}
+\section{Classroom Dashboards}
 \label{sec:teacher-dashboards}
+
 
 %\section{This Study}
 

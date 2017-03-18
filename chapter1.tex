@@ -11,9 +11,7 @@ The central research question asks how accurate of a flailing detector can be bu
 
 This question asks about \emph{flailing,} a behavior of making unproductive, sometimes random changes to the code, possibly elicited by the student being lost, and requiring teacher intervention. A thorough discussion of flailing and other behaviors will follow in Section \ref{sec:behaviors}.
 
-When a student is flailing, they are still on-task, but may need immediate intervention to return to productivity, and hypothetically, learning \citep{baker2004off, perkins-1986}. Detection of a flailing student, in real time, could be a useful tool for classroom teachers, who need to spend their class time judiciously. 
-
-This proposal outlines the steps taken so far in search of this real-time detection algorithm, describes the remaining work to be done, and establishes the criteria for evaluation of the final project.
+When a student is flailing, they are still on-task, but may need immediate intervention to return to productivity, and hypothetically, learning \citep{baker2004off, perkins-1986}. Detection of a flailing student, in real time, could be a useful tool for classroom teachers, who need to spend their class time judiciously. % TODO ref Orchestration
 
 %The complete set of research questions is below, with classes presented in ascending order of research importance:
 
@@ -51,53 +49,8 @@ This proposal outlines the steps taken so far in search of this real-time detect
 \section{Approach}
 App Inventor was modified to include new instrumentation features, which captured snapshot data on every change that the user made to their code. These snapshots were transmitted to a collection server, where they were stored. Multiple cohorts of middle school students enrolled in formal and informal app development curricula were selected to participate in one or two short activities for this study. The project files from those activities, with full snapshot history, were were isolated for analysis. Features were extracted from the snapshot histories to be used in characterizing behavior. %TODO complete methodology (atomic analysis, console)
 
-\section{Related Work} %TODO added for proposal
-Previous studies have used fine-grain instrumentation to dive into previously inaccessible student behaviors. These studies varied widely, from the discovery of phases of development over a project \citep{berland-2013, martin2013nanogenetic}, to analysis of off-task behavior in learning \citep{baker2004off}. Some have presented methods for identifying struggling students \cite{piech-2012}, and others develop well-informed assessments \citep{werner2012fairy}. All of them had commonalities: building models of learning by looking at fine-grain behavior data, observing small changes in work over time, filling in the stories that led up to the final artifacts. Examining the process of programming rather than the final products can uncover interesting behavior about student learning, and such patterns may have better predictive power than in-class exams \citep{blikstein2014}.
 
-Analysis of this data was informed by previous studies of student behavior in programming, math, and other activities. \cite{perkins-1986} identified and classified types of behaviors students exhibit when they encounter difficulty in programming. Off-task behavior, to which flailing may be related, has also been studied, such as \cite{baker2004off} did, in the context of mathematics. 
+\section{Hypothesis and Contributions}
 
-This study relates closely to learning pathways, especially those identified by learning analytics \citep{martin2013nanogenetic}. 
 
-The activities conducted for data collection revolved around debugging, as debugging has been shown to be a compelling mechanism to drive engagement with a short programming task \citep{webb2010troubleshooting}.
-
-A more extensive discussion of related work is presented in Chapter \ref{chap:background}.
-
-\section{Preliminary Results} %TODO added for proposal
-\label{chap:analysis}
-The debugging activity collected 6890 snapshots over 119 projects. The temperature activity collected 2296 snapshots over 35 projects. In total, 9186 snapshots were analyzed. From these data, features were extracted that represented the type of code change that occurred in a snapshot. Those features are listed in Table \ref{tab:features-extracted}. 
-
-Preliminary investigation has included manual inspection of data samples, and assessment of snapshot data in aggregate. This investigation provided confidence that the thesis statement is true, as patterns between strongly confident projects and clearly weak projects (examples from approximately first and fourth quartiles of student efficacy) already show distinct differences in aggregate data. 
-
-One positive indicator was an analysis between two populations. One population contained a wide variety of students, who mostly solved the problem successfully. The other contained students who mostly did not complete the problem, or only did so only with assistance. These populations had a noticeably different number of snapshots per project, and samples inspected from each consistently had different prevalence of repeated actions. Statistical significance of these outcomes have not been tested, as the populations will be improved in upcoming analysis by stronger mechanisms to identify the presence and degree of flailing behavior. Further investigation will generate measures of features of each project, and then aggregate those for analysis, rather than sum features across entire populations.
-
-\begin{table}
-\begin{centering}
-	\begin{tabular}{l l}
-	
-	Blocks Deleted 							& Fields Changed (text fields)		\\
-	Blocks Added 							& Block Properties Modified			\\
-	Blocks Moved in Space 					& Time interval since last snapshot	\\
-	Blocks Moved in Context (AST change)	& Time stamp of snapshot			\\
-
-	\end{tabular}
-	\caption[Features extracted from snapshots]{Features extracted from snapshot data.}
-	\label{tab:features-extracted}
-\end{centering}
-\end{table}
-
-\section{Plan for Remaining Work}
-Analysis is ongoing, and represents the bulk of the remaining work for this project. The features in Table \ref{tab:features-extracted} have been extracted, counted, and are ready for further data mining. The goal of further analysis is to match patterns of these features to the presence and degree of flailing behavior in the students they represent. The ground truth of these behaviors can be accessed by three mechanisms: expert analysis of snapshot playback, student worksheet coding, and investigation of noteworthy individuals.  
-
-Snapshot playback will be analyzed by researchers and other App Inventor experts to assess the degree of flailing present in a sample of student projects. This sample population will become the basis of the training set for pattern identification. Additionally, snapshot playback will be coded for degree of success in the problems, providing a judgment-free independent variable.
-
-Each activity was accompanied by a student worksheet, which contained guided questions on the student's degree of success, and were turned in by every participant at the conclusion of their session. Coding these worksheets for student confidence and correctness may be an additional indicator towards the student's degree of understanding, and therefore the likelihood of engaging in flailing behavior.
-
-The smallest ground truth data set is a list of noteworthy individuals--- students who were documented by instructors at the time of the session as exceptional in either their understanding, or their lack of understanding. The projects of these individuals can be used as archetypal examples when designing code sets, or added to the training sets directly.
-
-With a training set of data defining presence or degree of flailing in particular projects, analysis will be conducted to investigate the relationship of those projects to their extracted feature sets. The first stage of this analysis will include standard tests for correlation and analysis of variance, intending to reduce the measure set to the most pertinent. The second stage will apply simple machine learning techniques, which have been shown to be sufficient for discovering insights into student behavior patterns \citep{blikstein2014}.
-% Pivot into problem-specific atomic analysis prevented this
-Evaluation of this project will be based on the strength of the patterns identified to predict flailing behavior in students. 
-%Expert analysis will be required to provide accurate training data for this identification. Once the patterns are identified, writing the algorithm to detect it in real-time will be possible. With that algorithm, the thesis statement will be shown to be true.
-
-%\section{Hypothesis and Contributions}
-%\section{Rationale}
+\section{Rationale}

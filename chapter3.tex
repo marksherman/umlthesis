@@ -1,127 +1,6 @@
 \chapter{Methodology}
 
-\section{The Data Collection System}
-One mission of this project was to build instrumentation into App Inventor to collect rich student programming behavior data as the students program. This instrumentation added to a growing tradition of instrumentation within the development environment itself, such as the works of \citet{berland-2013}, \citet{lipman-phd}, and others. The system collected a \emph{snapshot} on every change the user made to their app. With each snapshot, the entire contents of their source files (excluding media assets) were transmitted to a secure research server where they were de-identified and stored. This collection of snapshot data is the corpus from which relevant features were extracted for analysis.
-
-% \subsection{Modifications to App Inventor}
-% \label{sec:mod-ai}
-% Instrumentation was added to App Inventor, inspired by \citet{piech-2012}. Every time the user changed anything, for example: move a block, add a block, or modify a component, a snapshot was triggered, and the project state was captured. A single snapshot contained the entire block workspace and designer configuration in text form. Assets, including images uploaded, were not included.
-
-% The snapshot payload was transmitted upon each user change to a server, where it was de-identified and stored. Details on the server's processes are below (Section \ref{sec:server}). The snapshot itself contained a collection of fields, shown in Table \ref{tab:snapshotPayload}. 
-
-
-% \begin{table}
-% \begin{centering}
-% 	\begin{tabular}{l l}
-% 		Data Field 			& Contents \\ \hline
-% 		userName  			& User's real google account name. \\
-% 		projectName 		& User's project file name. 	\\
-% 		projectId 			& Unique ID assigned to the project, invisible to user.	\\
-% 		screenName 			& Which screen in the project the user is modifying.	\\
-% 		sessionId 			& Browser session, to identify session boundaries in analysis.	\\
-% 		yaversion 			& Current version of the App Inventor environment. 	\\
-% 		languageVersion 	& Current version of the App Inventor blocks language. 	\\
-% 		eventType 			& Future use: to explicitly identify the change event that occurred. 	\\
-% 		blocks 				& Full content of the blocks, in XML. 	\\
-% 		form 				& Full content of the screen's design, or form, in JSON.
-
-% 	\end{tabular}
-% 	\caption{The \emph{projectData} structure that comprises the snapshot payload.}
-% 	\label{tab:snapshotPayload}
-% \end{centering}
-% \end{table}
-
-% App Inventor was primarily composed using the Google Web Toolkit (GWT), which allows rich web pages to be written in Java and compiled to HTML and javascript. Within the GWT-built App Inventor page there is a panel hosting a somewhat-sandboxed blockly environment, written in pure javascript. The snapshot mechanism was implemented in the blockly environment, but required access to certain data in the GWT environment. The interface between GWT and blockly was implemented in a file \emph{BlocklyPanel.java}, which was modified to expose the necessary data. The \emph{BlocklyPanel.java} file was large, with over a thousand lines in length, and governed the entire blockly sandbox within App Inventor. Exposing new features to blockly required adding new GWT java methods to extract the data from the GWT-managed memory, and then adding corresponding javascript functions that would be exported into the blockly environment that serve as wrappers for the GWT methods. Creating new features on this seam between environments was not trivial. The modifications to this file, but not the file in its entirety, are listed in Appendix \ref{src:ai/BlocklyPanel.java}.
-
-% The snapshot mechanism itself was added to blockly environment, and provided a single external function, \emph{Blockly.Snapshot.send}. This function could be called anywhere from within blockly (or within GWT, with some effort, if desired). In this experiment, snapshots were triggered in only one place, the REPL manager, or, as it was known in the source, \emph{replmgr}. The REPL manager maintained the connection between App Inventor and the connected target device. When a device was connected, any changes to the app in App Inventor were immediately sent to the device, all while the app continues to run on the device uninterrupted. The REPL manager made this possible, collecting code changes, compiling them, and sending them to the device. The snapshot send function was inserted into the REPL manager's \emph{pollYail} routine, which is the function that is called to check if there is a code update to push to the phone. That function was called on-demand by the REPL manager approximately anytime a change was made, with a small amount of change aggregation. That aggregation was intended to service the REPL in a good-enough fashion, which did not require changes to be updated on every pixel-wise change as a block was dragged across the screen, but did require the end position. This function already aggregated trivial, in-motion changes such as block dragging into atomic events, and this degree of granularity was ideal for snapshot capture. 
-
-% An alternative trigger point for snapshots was in the \emph{blocklyWorkspaceChange} event callback function, but this position was overly aggressive, as it was used in the graphics engine of blockly to repaint the screen on \emph{any} change. For a snapshot, in-progress block drags across the screen were considered part of the same atomic change. Only the final resting position was necessary for a the desired data density of a snapshot. Additionally, the workspace change event could be called hundreds of time more often than \emph{pollYail,} which put unnecessary stress on the snapshot computation and transmission mechanisms. Triggering snapshots from within the REPL manager position, described above, offered an ideal compromise. Every logical block change was captured, but transient state of the block mid-change was not. Additionally, \emph{pollYail} was also called in response to changes in the Designer, allowing component changes to trigger snapshots for free.
-
-% Another triggering option was considered, where each block type would have the trigger added to their modification callback functions, effectively instrumenting the individual blocks instead of the workspace as a whole. This option could have provided additional specificity, as it could reliably report the nature of the change that triggered the snapshot, such as ``text block was moved.'' The snapshot protocol was designed to accommodate such data, using the \emph{eventType} field in the payload structure (Table \ref{tab:snapshotPayload}). This metadata would have been committed to the git repository in notes form, and would be extractable for every change just as easily as the content data. Certain analysis would not need the data if this metadata were consistent. However, the engineering demand to implement this style of instrumentation with full coverage was too great to be complete in time for the pilot study. As such, one weakness of the snapshot system as described here is that it does not know why a snapshot was triggered. That was traded for guarantee of full coverage, that no change would be missed. As a result, analysis required the construction of tools to extract that change data from the recorded data. Future work may include such event-driven metadata, and is further explored in Section \ref{sec:futurework}.
-
-
-% \subsection{Snapshot Receiver Server}
-% \label{sec:server}
-% The snapshots captured in App Inventor were transmitted to a secure research server, running software that will be described in this section, and called the ``Snapshot Service.'' This server architecture received snapshot payloads from the custom instances of App Inventor, de-identified the user names, and stored the snapshots and metadata persistently. This service needed to be durable, as it handled sensitive user information. It also needed to be performant, as under worst-case load scenario there could be hundreds of concurrent users, each delivering over 100 snapshots each minute. The service was written in node.js \citep{nodejs}, a server-side javascript environment that provides high performance and reliability through an event-driven, asynchronous I/O model. Relevant source code is included in Appendix \ref{src:snapshot-service}.
-
-% The service implemented a JSON-RPC API \citep{jsonrpc}, where each snapshot sent from App Inventor was a new RPC connection. There was one API endpoint, \emph{file.saveProject}, which accepted the data, applied the de-identifier, and dispatched the process to commit the change to disk. The RPC API, low-level system access, and git access libraries, were based on similar technology developed by \citet{lipman-2011}. No part of that existing system was used wholesale, but the lessons learned from \citet{lipman-2014} strongly informed the design decisions presented here. Dr. \citeauthor{lipman-2014} also provided code review services for this system. The source code can be found in Appendix \ref{src:file.js}. The logic of the \emph{saveProject} process was as follows:
-
-% \begin{enumerate}
-% \item Parse JSON received from App Inventor
-% \item Extract real user name from parsed data
-% \item Replace real user name with code name (detail below in Section \ref{sec:deident})
-% \item Save data to database:
-% \begin{enumerate}
-% 	\item Sanitize data, removing dangerous dots and slashes from filenames
-% 	\item Assemble git commit message
-% 	\item Assemble directory for this project based on user code name and project ID
-% 	\item Make directory on disk (using -p to only create new as required, preventing overwriting)
-% 	\item Write files to directory (blocks and project form)
-% 	\item Create git repository in that directory (git re-initializes non-destructively if it already exists)
-% 	\item Set git credentials for user, based on code name
-% 	\item Stage and commit project files (blocks and project form)
-% 	\item Amend current directory as git notes
-% \end{enumerate}
-% \end{enumerate}
-
-% \subsection{De-Identification}
-% \label{sec:deident}
-% Removal of identifiable user data is a critical issue in human subjects research. In accordance with the IRB approval, student work artifacts had to be stripped of identifiable information, and a system feature was implemented to do so automatically (Appendix \ref{IRB:deident}). This feature replaced the student's real user name with a randomized code name. This feature also kept record of the relations between real names and code names, allowing a consistent mapping. The same user would always be given the same code name, which was critical, as each snapshot was an addition to the data store. Without consistent user-to-code-name mapping, the thousands of snapshots would be like a spilled deck of index cards- useless without order or consistency. 
-
-% The map between user names and code names was stored in a database file on the collection server. That server was only accessible to the author, and two trusted IT personnel in the computer science department. Those IT personnel never accessed the server in the time since data collection began. The database selected was sqlite3, because it uses a single, regular file as the datastore that could be carefully controlled and protected. That file resided on the server, and was kept separate from the bulk snapshot data. The snapshot data could be moved and analyzed without fear of exposing the real names associated with those data. The mapping database file was only moved off the server in once instance, over encrypted and secured means, to the author's personal computer, which employed a reasonable guarantee of access control, like the server. This protocol was deemed safe by the research team and IRB.
-
-% Implementation of the de-identifier was conceptually straightforward- upon every snapshot, look up the user name in the database, and if found, replace the user name with the existing code name. If the user is not in the database, generate a new code name, and insert it into the database. Either way, a code name is returned, and replaces the user name. 
-
-% In the event of an error, the entire snapshot save operation was aborted, so there was no possibility of data being saved without a valid, de-identified code name replacement. The de-identification system was thoroughly tested, protected with regression unit tests, and closely monitored during data collected. During the entire data collection, no error in this system occurred. The combination of sqlite3 and node.js proved to be surprisingly fast, and handled the highest traffic periods with ease. The author would like to attribute this performance in part to their quality and efficient programming, but such cannot be validated scientifically at this time.
-
-% The full source code of the de-identification module is in Appendix \ref{src:userdb.js}.
-
-% \subsection{The Snapshot Database}
-% \label{sec:db}
-% The database containing the snapshot contents was a collection of git directories. Each user project was a git repository, and each recorded snapshot was a commit into that repository. Additional metadata was included in git notes, or as a content file in the repository. This concept was based on the work of \citet{lipman-phd}. The technology of this database was differentiated by its enhanced granularity of data recorded, adoption of a remote client-server model, and future-looking adapters to allow use of different environments and different languages. The database itself was organized in directories on disk of the server, where the first level of directories contained users. Within each user folder were folders representing each project that was recorded for that user. The project names were a combination of the user-mutable project name and the unique project ID generated by App Inventor. The two fields were concatenated with a \emph{\#} character, which is not allowed in file names and does not occur in project IDs, so it provides a unique token to parse them apart, if needed. Within each project were directories for each screen. Most apps did not extend beyond the default screen, which is always called \emph{Screen1.} Within each screen folder were the contents of the designer and blocks, represented as JSON and XML files, respectively. This is visualized with example data in Table \ref{tab:git-db-org}.
-
-% \begin{table}
-% \begin{centering}
-% 	\begin{tabular}{ll}
-% 	\hline
-% 	DB directory&  \mintinline[fontsize=\footnotesize]{bash}{/}		\\
-% 	Code name 	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose}		\\
-% 	Project name & \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount}		\\
-% 	Project ID 	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git}		\\
-% 	Screen name	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1}		\\
-% 	Blocks code	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1/blocks.xml}		\\
-% 	Designer form& \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1/form.json}		\\
-% 	\hline
-% 	\end{tabular}
-% 	\caption[Organization of snapshot database.]{Organization of snapshot database, shown with example data, where each project was a git repository, containing the whole contents of that project's code.}
-% 	\label{tab:git-db-org}
-% \end{centering}
-% \end{table}
-
-% The primary benefit of using git was that it allowed easy human perusal through the time line of projects, and provided code diffs for free. This feature set was briefly useful in assessing that the collection system was working, but in general, these benefits were not highly utilized. Analysis was conducted by developing python scripts to extract features from the data, leaving the human browsing features of git irrelevant. The analysis tools are discussed in depth in Section \ref{sec:analysis-tools}. Additionally, this method of adding many commits to many git repositories is disk-inefficient to git itself, and resulted in an extremely large consumption rate of disk space, and more critically, file system inodes. Disk inodes are the handles that the file system uses to identify and find files, and the maximum number available on an ext4 file system is fixed. Working in this way, git consumed an exorbitant number of these inodes, and required occasional repacking to free them, resulting in the development of the garbage collection script, included in Appendix \ref{src:gc.sh}. While the system was in use, that script needed to be run weekly to prevent the disk from filling and becoming unwritable. 
-
-% \subsection{Engineering Concerns}
-% Snapshots captured the entirety of the project's source text at every change. As a program was built, the number of blocks driving it was likely to grow, and the snapshot payload would grow linearly with it. This initially caused concern that the large block files could result in poor performance, such as: slowing down the student's browser, effecting their experience; slow transmission over school networks, creating incomplete or out-of-order snapshot data; or slowdown of the reception server, causing data to be lost or corrupted. In testing, these concerns were allayed. The system performed sufficiently fast under all test cases, indicating that, if possible, a truly extreme case would be necessary to adversely impact performance. The constraints of the experimental design inhibited such massive projects from developing.
-% %TODO grab scary concerns from above sections and move them here for better clarity
-
-
-\section{Snapshot Playback}
-\label{sec:playback}
-
-A playback system was created to allow researchers to step through the snapshot history of any project. This system afforded the researchers the ability to load a particular snapshot, or frame, increment easily with \emph{next} and \emph{prev} functions, and see at what time the snapshot took place. %This system depended on pre-formatted data generated by the analysis tools, where a project's history was encoded as JSON.
-
-%To start the playback mechanism, the researcher supplies the \emph{Playback.start} function of the modified version of App Inventor with a file name. The playback module looks for a local web server, fetches that file name, parses the JSON, and returns the control object. 
-%The entirety of the module's source code is included in Appendix \ref{src:playback.js}. 
-An example of the system at work is shown in Figure \ref{img:playback}. The controls are in the console at the bottom of the screen.
-
-\begin{figure}
-  \centering
-      \includegraphics[width=\textwidth]{images/ch3-playback}
-  \caption[Snapshot playback]{The snapshot playback system in action, showing the final frame of a student project, number 43, which took place at time 16 minutes and 6 seconds, a fair time for the problem. The ``Research Tools'' window contains the snapshot playback controls.}
-  \label{img:playback}
-\end{figure}
-% Note: this image made with data d/AcapulcoDeer
-
+Data were collected from students working in classroom and summer camp programming activities in App Inventor. These data consisted of in-progress snapshots of their projects, where every change to an app was captured for every student. This chapter describes the study in general, the data collection system, the nature of the data collected, the programming activities the students were conducting.
 
 
 \section{The Experiment}
@@ -248,6 +127,157 @@ This activity did not have the prior testing and validation that the debugging a
   \caption[The Temperature Activity solution]{The Temperature Activity solution.}
   \label{fig:temperature1}
 \end{figure}
+
+
+
+\section{The Data Collection System}
+One mission of this project was to build instrumentation into App Inventor to collect rich student programming behavior data as the students program. This instrumentation added to a growing tradition of instrumentation within the development environment itself, such as the works of \citet{berland-2013}, \citet{lipman-phd}, and others. The system collected a \emph{snapshot} on every change the user made to their app. With each snapshot, the entire contents of their source files (excluding media assets) were transmitted to a secure research server where they were de-identified and stored. This collection of snapshot data is the corpus from which relevant features were extracted for analysis.
+
+\subsection{Modifications to App Inventor}
+\label{sec:mod-ai}
+Instrumentation was added to App Inventor, inspired by \citet{piech-2012}. Every time the user changed anything, for example: move a block, add a block, or modify a component, a snapshot was triggered, and the project state was captured. A single snapshot contained the entire block workspace and designer configuration in text form. Assets, including images uploaded, were not included. The basic architecture of the snapshot capture process are seen in Figure \ref{fig:snapshot-arch}.
+
+\begin{figure}
+  \centering
+      \includegraphics[width=\textwidth]{diagrams/architecture}
+  \caption[Snapshot capture design diagram]{The snapshot capture system in App Inventor, which is triggered by any change to blocks or designer. On a change, data from the designer, blocks editor, and additional metadata are captured and transmitted to the receiver server.}
+  \label{fig:snapshot-arch}
+\end{figure}
+
+The snapshot payload was transmitted upon each user change to a server, where it was de-identified and stored. Details on the server's processes are below, in Section \ref{sec:server}. Additional technical detail on the implementation of the changes to App Inventor are below, in Section \ref{sub:tech:ai}.
+
+\subsection{Snapshot Receiver Server}
+\label{sec:server}
+The snapshots captured in App Inventor were transmitted to a secure research server, running software that will be described in this section, and called the ``Snapshot Service.'' This server architecture received snapshot payloads from the custom instances of App Inventor, de-identified the user names, and stored the snapshots and metadata persistently. This service had to maintain the integrity of the sensitive, identifiable user data and reliably process peak load, which was tested up to hundreds of snapshots per second. The operation of the server is described in Figure \ref{fig:server-process}
+
+
+\begin{figure}
+  \centering
+      \includegraphics[width=\textwidth]{diagrams/server-operation}
+  \caption[Server operating diagram]{Operating diagram for the snapshot collection server. The boxed folder ``project'' denotes the git repository location.}
+  \label{fig:server-process}
+\end{figure}
+
+
+\subsection{De-Identification}
+\label{sec:deident}
+Removal of identifiable user data is a critical issue in human subjects research. In accordance with the IRB approval, student work artifacts had to be stripped of identifiable information, and a system feature was implemented to do so automatically (Appendix \ref{IRB:deident}). This feature replaced the student's real user name with a randomized code name. This feature also kept record of the relations between real names and code names, allowing a consistent mapping. The same user would always be given the same code name, which was critical, as each snapshot was an addition to the data store. Without consistent user-to-code-name mapping, the thousands of snapshots would be like a spilled deck of index cards- useless without order or consistency. 
+
+The map between user names and code names was stored in a database file on the collection server. That server was only accessible to the author, and two trusted IT personnel in the computer science department. Those IT personnel never accessed the server in the time since data collection began. The database selected was sqlite3, because it uses a single, regular file as the datastore that could be carefully controlled and protected. That file resided on the server, and was kept separate from the bulk snapshot data. The snapshot data could be moved and analyzed without fear of exposing the real names associated with those data. The mapping database file was only moved off the server in once instance, over encrypted and secured means, to the author's personal computer, which employed a reasonable guarantee of access control, like the server. This protocol was deemed safe by the research team and IRB.
+
+Implementation of the de-identifier was conceptually straightforward- upon every snapshot, look up the user name in the database, and if found, replace the user name with the existing code name. If the user is not in the database, generate a new code name, and insert it into the database. Either way, a code name is returned, and replaces the user name. 
+
+% In the event of an error, the entire snapshot save operation was aborted, so there was no possibility of data being saved without a valid, de-identified code name replacement. The de-identification system was thoroughly tested, protected with regression unit tests, and closely monitored during data collected. During the entire data collection, no error in this system occurred. The combination of sqlite3 and node.js proved to be surprisingly fast, and handled the highest traffic periods with ease. The author would like to attribute this performance in part to their quality and efficient programming, but such cannot be validated scientifically at this time.
+
+% The full source code of the de-identification module is in Appendix \ref{src:userdb.js}.
+
+% \subsection{The Snapshot Database}
+% \label{sec:db}
+% The database containing the snapshot contents was a collection of git directories. Each user project was a git repository, and each recorded snapshot was a commit into that repository. Additional metadata was included in git notes, or as a content file in the repository. This concept was based on the work of \citet{lipman-phd}. The technology of this database was differentiated by its enhanced granularity of data recorded, adoption of a remote client-server model, and future-looking adapters to allow use of different environments and different languages. The database itself was organized in directories on disk of the server, where the first level of directories contained users. Within each user folder were folders representing each project that was recorded for that user. The project names were a combination of the user-mutable project name and the unique project ID generated by App Inventor. The two fields were concatenated with a \emph{\#} character, which is not allowed in file names and does not occur in project IDs, so it provides a unique token to parse them apart, if needed. Within each project were directories for each screen. Most apps did not extend beyond the default screen, which is always called \emph{Screen1.} Within each screen folder were the contents of the designer and blocks, represented as JSON and XML files, respectively. This is visualized with example data in Table \ref{tab:git-db-org}.
+
+% \begin{table}
+% \begin{centering}
+% 	\begin{tabular}{ll}
+% 	\hline
+% 	DB directory&  \mintinline[fontsize=\footnotesize]{bash}{/}		\\
+% 	Code name 	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose}		\\
+% 	Project name & \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount}		\\
+% 	Project ID 	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git}		\\
+% 	Screen name	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1}		\\
+% 	Blocks code	&  \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1/blocks.xml}		\\
+% 	Designer form& \mintinline[fontsize=\footnotesize]{bash}{/ColomboMoose/JumpCount#5743573328723968.git/Screen1/form.json}		\\
+% 	\hline
+% 	\end{tabular}
+% 	\caption[Organization of snapshot database.]{Organization of snapshot database, shown with example data, where each project was a git repository, containing the whole contents of that project's code.}
+% 	\label{tab:git-db-org}
+% \end{centering}
+% \end{table}
+
+% The primary benefit of using git was that it allowed easy human perusal through the time line of projects, and provided code diffs for free. This feature set was briefly useful in assessing that the collection system was working, but in general, these benefits were not highly utilized. Analysis was conducted by developing python scripts to extract features from the data, leaving the human browsing features of git irrelevant. The analysis tools are discussed in depth in Section \ref{sec:analysis-tools}. Additionally, this method of adding many commits to many git repositories is disk-inefficient to git itself, and resulted in an extremely large consumption rate of disk space, and more critically, file system inodes. Disk inodes are the handles that the file system uses to identify and find files, and the maximum number available on an ext4 file system is fixed. Working in this way, git consumed an exorbitant number of these inodes, and required occasional repacking to free them, resulting in the development of the garbage collection script, included in Appendix \ref{src:gc.sh}. While the system was in use, that script needed to be run weekly to prevent the disk from filling and becoming unwritable. 
+
+% \subsection{Engineering Concerns}
+% Snapshots captured the entirety of the project's source text at every change. As a program was built, the number of blocks driving it was likely to grow, and the snapshot payload would grow linearly with it. This initially caused concern that the large block files could result in poor performance, such as: slowing down the student's browser, effecting their experience; slow transmission over school networks, creating incomplete or out-of-order snapshot data; or slowdown of the reception server, causing data to be lost or corrupted. In testing, these concerns were allayed. The system performed sufficiently fast under all test cases, indicating that, if possible, a truly extreme case would be necessary to adversely impact performance. The constraints of the experimental design inhibited such massive projects from developing.
+% %TODO grab scary concerns from above sections and move them here for better clarity
+
+\section{Technical Detail of Snapshot Collection}
+
+\subsection{Implementation Details of App Inventor Modifications}
+\label{sub:tech:ai}
+App Inventor was primarily composed using the Google Web Toolkit (GWT), which allows rich web pages to be written in Java and compiled to HTML and javascript. Within the GWT-built App Inventor page there is a panel hosting a somewhat-sandboxed blockly environment, written in pure javascript. The snapshot mechanism was implemented in the blockly environment, but required access to certain data in the GWT environment. The interface between GWT and blockly was implemented in a file \emph{BlocklyPanel.java}, which was modified to expose the necessary data. The \emph{BlocklyPanel.java} file was large, with over a thousand lines in length, and governed the entire blockly sandbox within App Inventor. Exposing new features to blockly required adding new GWT java methods to extract the data from the GWT-managed memory, and then adding corresponding javascript functions that would be exported into the blockly environment that serve as wrappers for the GWT methods. Creating new features on this seam between environments was not trivial. The modifications to this file, but not the file in its entirety, are listed in Appendix \ref{src:ai/BlocklyPanel.java}.
+
+The snapshot mechanism itself was added to blockly environment, and provided a single external function, \emph{Blockly.Snapshot.send}. This function could be called anywhere from within blockly (or within GWT, with some effort, if desired). In this experiment, snapshots were triggered in only one place, the REPL manager, or, as it was known in the source, \emph{replmgr}. The REPL manager maintained the connection between App Inventor and the connected target device. When a device was connected, any changes to the app in App Inventor were immediately sent to the device, all while the app continues to run on the device uninterrupted. The REPL manager made this possible, collecting code changes, compiling them, and sending them to the device. The snapshot send function was inserted into the REPL manager's \emph{pollYail} routine, which is the function that is called to check if there is a code update to push to the phone. That function was called on-demand by the REPL manager approximately anytime a change was made, with a small amount of change aggregation. That aggregation was intended to service the REPL in a good-enough fashion, which did not require changes to be updated on every pixel-wise change as a block was dragged across the screen, but did require the end position. This function already aggregated trivial, in-motion changes such as block dragging into atomic events, and this degree of granularity was ideal for snapshot capture. 
+
+An alternative trigger point for snapshots was in the \emph{blocklyWorkspaceChange} event callback function, but this position was overly aggressive, as it was used in the graphics engine of blockly to repaint the screen on \emph{any} change. For a snapshot, in-progress block drags across the screen were considered part of the same atomic change. Only the final resting position was necessary for a the desired data density of a snapshot. Additionally, the workspace change event could be called hundreds of time more often than \emph{pollYail,} which put unnecessary stress on the snapshot computation and transmission mechanisms. Triggering snapshots from within the REPL manager position, described above, offered an ideal compromise. Every logical block change was captured, but transient state of the block mid-change was not. Additionally, \emph{pollYail} was also called in response to changes in the Designer, allowing component changes to trigger snapshots for free.
+
+Another triggering option was considered, where each block type would have the trigger added to their modification callback functions, effectively instrumenting the individual blocks instead of the workspace as a whole. This option could have provided additional specificity, as it could reliably report the nature of the change that triggered the snapshot, such as ``text block was moved.'' The snapshot protocol was designed to accommodate such data, using the \emph{eventType} field in the payload structure (Table \ref{tab:snapshotPayload}). This metadata would have been committed to the git repository in notes form, and would be extractable for every change just as easily as the content data. Certain analysis would not need the data if this metadata were consistent. However, the engineering demand to implement this style of instrumentation with full coverage was too great to be complete in time for the pilot study. As such, one weakness of the snapshot system as described here is that it does not know why a snapshot was triggered. That was traded for guarantee of full coverage, that no change would be missed. As a result, analysis required the construction of tools to extract that change data from the recorded data. Future work may include such event-driven metadata, and is further explored in Section \ref{sec:futurework}. The snapshot itself contained a collection of fields, shown in Table \ref{tab:snapshotPayload}. 
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{l l}
+		Data Field 			& Contents \\ \hline
+		userName  			& User's real google account name. \\
+		projectName 		& User's project file name. 	\\
+		projectId 			& Unique ID assigned to the project, invisible to user.	\\
+		screenName 			& Which screen in the project the user is modifying.	\\
+		sessionId 			& Browser session, to identify session boundaries in analysis.	\\
+		yaversion 			& Current version of the App Inventor environment. 	\\
+		languageVersion 	& Current version of the App Inventor blocks language. 	\\
+		eventType 			& Future use: to explicitly identify the change event that occurred. 	\\
+		blocks 				& Full content of the blocks, in XML. 	\\
+		form 				& Full content of the screen's design, or form, in JSON.
+
+	\end{tabular}
+	\caption{The \emph{projectData} structure that comprises the snapshot payload.}
+	\label{tab:snapshotPayload}
+\end{centering}
+\end{table}
+
+\subsection{Implementation Details of The Collection Server}
+The server was written in node.js \citep{nodejs}, a server-side javascript environment that provides high performance and reliability through an event-driven, asynchronous I/O model. Relevant source code is included in Appendix \ref{src:snapshot-service}.
+
+The service implemented a JSON-RPC API \citep{jsonrpc}, where each snapshot sent from App Inventor was a new RPC connection. There was one API endpoint, \emph{file.saveProject}, which accepted the data, applied the de-identifier, and dispatched the process to commit the change to disk. The RPC API, low-level system access, and git access libraries, were based on similar technology developed by \citet{lipman-2011}. No part of that existing system was used wholesale, but the lessons learned from \citet{lipman-2014} strongly informed the design decisions presented here. Dr. \citeauthor{lipman-2014} also provided code review services for this system. The source code can be found in Appendix \ref{src:file.js}. The logic of the \emph{saveProject} process was as follows:
+
+%TODO replace with a diagram
+TODO This list to be replaced with a diagram.
+\begin{enumerate}
+\item Parse JSON received from App Inventor
+\item Extract real user name from parsed data
+\item Replace real user name with code name (detail below in Section \ref{sec:deident})
+\item Save data to database:
+\begin{enumerate}
+	\item Sanitize data, removing dangerous dots and slashes from filenames
+	\item Assemble git commit message
+	\item Assemble directory for this project based on user code name and project ID
+	\item Make directory on disk (using -p to only create new as required, preventing overwriting)
+	\item Write files to directory (blocks and project form)
+	\item Create git repository in that directory (git re-initializes non-destructively if it already exists)
+	\item Set git credentials for user, based on code name
+	\item Stage and commit project files (blocks and project form)
+	\item Amend current directory as git notes
+\end{enumerate}
+\end{enumerate}
+
+
+\section{Snapshot Playback}
+\label{sec:playback}
+
+A playback system was created to allow researchers to step through the snapshot history of any project. This system afforded the researchers the ability to load the entire history of a particular paroject, and easily walk through that history. The tool displayed the snapshot number (labelled as ``frame'', like a frame in a video), the time at which the snapshot occurred, and the interval time since the previous interval. 
+
+%To start the playback mechanism, the researcher supplies the \emph{Playback.start} function of the modified version of App Inventor with a file name. The playback module looks for a local web server, fetches that file name, parses the JSON, and returns the control object. 
+%The entirety of the module's source code is included in Appendix \ref{src:playback.js}. 
+An example of the system at work is shown in Figure \ref{img:playback}. The controls are in the console at the bottom of the screen.
+
+\begin{figure}
+  \centering
+      \includegraphics[width=\textwidth]{images/ch3-playback}
+  \caption[Snapshot playback]{The snapshot playback system in action, showing the final frame of a student project, number 43, which took place at time 16 minutes and 6 seconds, a fair time for the problem. The ``Research Tools'' window contains the snapshot playback controls.}
+  \label{img:playback}
+\end{figure}
+% Note: this image made with data d/AcapulcoDeer
+
+
+
+
 
 %\section{Assessment}
 
