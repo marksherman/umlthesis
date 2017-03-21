@@ -1,0 +1,254 @@
+\chapter{Code Listing Excerpts} \label{appendix:listings}
+
+Interesting source code for the data capture, collection, and analysis systems used in this project are listed here. 
+
+% font sizes, ascending: \tiny \scriptsize \footnotesize \small \normalsize
+% scriptsize gets a little more than 80 chars wide and 44 lines on the page, which is fair.
+\setminted{fontsize=\scriptsize, fontfamily=courier, linenos, breaklines}
+
+% CHAPTER 4
+\section{Field Change Accumulator}
+\label{src:reduceFieldChanges}
+
+\begin{listing}[]
+\begin{minted}{python}
+def reduceFieldChanges(changes):
+    """Reduces char-by-char field changes into a single change.
+    Operates on a list of changes, and modifies that list in place.
+    This would run on the return value from processProject.
+    Returns nothing, as changes are made in the passed-in structure itself.
+    Identifies changes to the same field, and reduces them to their final state.
+    Also has a 10-second timeout window, so changes 10 seconds apart are kept.
+    """
+
+    changesToDelete = []
+    prevFlag = False
+    prevList = []
+    prevChange = {'date': '0'}
+    prevTime = 0
+
+    for thisChange in changes:
+        thisFlag = False
+        thisList = []
+        thisTime = thisChange.get('seconds_elapsed')
+        features = []
+
+        # if a field changed in this change, take the list of all field changed blocks 
+        # and add to list
+        if thisChange.get(names.featureExtractionResults):
+            features = thisChange[names.featureExtractionResults]
+            thisFlag = features[names.blocksFieldsChangedFlag]
+        if thisFlag:
+            thisList = features[names.blocksFieldsChangedList]
+
+        # Identify blocks from this change and the prev change whose fields were modified
+        # Include those blocks for deletion UNLESS they're more than 10 seconds apart
+        # remember empty lists are falsey!
+        deleteMe = prevFlag and thisFlag
+        deleteMe = deleteMe and intersect(prevList, thisList)
+        deleteMe = deleteMe and (thisTime - prevTime < 10)
+
+        if deleteMe:
+            changesToDelete.append(prevChange)
+
+        prevFlag = thisFlag
+        prevList = thisList
+        prevChange = thisChange
+        prevTime = thisTime
+
+    for c in changesToDelete:
+        changes.remove(c)
+\end{minted}
+\caption{The Field Change Accumulator}
+\label{src:lst:field-change}
+\end{listing}
+
+Listing \ref{src:lst:field-change} presents the code used for the text field change accumulator described in Section \ref{sec:text-acc}. This algorithm operated on a single project, represented as a list of changes in historical order. It identified when the a text field was modified multiple times in rapid succession and reduced that series of changes to its final state.
+
+This algorithm was part of the post-hoc analysis tools, and was not part of the real-time assessment algorithm.
+
+
+\section{Feature Extraction Tests}
+\label{src:feature-extraction-tests}
+
+Below are the code listings for the feature extraction module, as discussed in Section \ref{sec:feature-extraction}, displayed as Listings \ref{src:lst:add-delete}--\ref{src:lst:properties-modified}. All of these tests took representations of two adjacent snapshots as arguments. Data types representing snapshots could be any of the following: ``root,'' which was the tree structures of the blocks itself; ``IDmap,'' a structure mapping ID numbers to blocks; or ``parentMap,'' a structure mapping block ID numbers to their parent blocks. There were also helper functions to access and manipulate these structures, whose definitions are unneccesary to understand their function, and were not included here.
+
+All of these tests returned an array containing references to the blocks for which the test was true. Returning an empty array indicated that no blocks were found, and that specific change type did not occur between the two given snapshots.
+
+Helper functions have been included here where they were necessary to fully understand the operation of the test. These tests were written in python and made significant use of list comprehensions \citep{oliphant2007python}.
+
+\begin{listing}[]
+\begin{minted}{python}
+def checkForDeletedAddedBlocks(rootA, rootB):
+    """Returns lists: deleted and added blocks from A to B."""
+    iterA = rootA.iter(BLOCK)
+    iterB = rootB.iter(BLOCK)
+    setA = frozenset([el.get('id') for el in iterA])
+    setB = frozenset([el.get('id') for el in iterB])
+    deleted = setA.difference(setB)
+    added = setB.difference(setA)
+    return list(deleted), list(added)
+\end{minted}
+\caption{Test for Added and/or Deleted Blocks}
+\label{src:lst:add-delete}
+\end{listing}
+
+\begin{listing}[]
+\begin{minted}{python}
+def checkForMovedBlocks(IDmapA, IDmapB):
+    """Returns list: blocks that moved in space or context from A to B."""
+    # only check blocks that exist in both time steps (set intersection)
+    blockIDs = commonKeys(IDmapA, IDmapB)
+    return [i for i in blockIDs if didThisBlockMoveinSpace(IDmapA[i], IDmapB[i])]
+
+# Returns
+#   True: block is top-level and moved on workpace
+#   False: block was moved in or out of top-level (in/out of being nested)
+#   False: block is top level and coordinates did not change
+#   False: block is nested and stayed as such (though parent may have moved)
+def didThisBlockMoveinSpace(blockA, blockB):
+    """Checks the same block element at two different times for motion in space"""
+    sameBlockCheck(blockA, blockB)
+    # isTop* is True if location coordinates are in that block
+    isTopA = isBlockTopLevel(blockA)
+    isTopB = isBlockTopLevel(blockB)
+
+    if isTopA and isTopB:
+        # both are top-level
+        return blockA.get('x') != blockB.get('x') or blockA.get('y') != blockB.get('y')
+    else:
+        # block either is not top level or changed contexts
+        return False
+\end{minted}
+\caption{Test for Moved Blocks (on workspace)}
+\end{listing}
+
+\begin{listing}[]
+\begin{minted}{python}
+def checkForContextMove(IDmapA, IDmapB, parentMapA, parentMapB):
+    """Returns list: blocks that moved in context, having a new parent, from A to B"""
+    blockIDs = commonKeys(IDmapA, IDmapB)
+    # for each ID, get that block, and compare parentmaps
+    return [i for i in blockIDs if
+            findParentBlockByID(i, parentMapA, IDmapA).get('id') !=
+            findParentBlockByID(i, parentMapB, IDmapB).get('id')]
+\end{minted}
+\caption{Test for Blocks Moving in Context}
+\end{listing}
+
+\begin{listing}[]
+\begin{minted}{python}
+def checkForFieldChanges(IDmapA, IDmapB):
+    """Returns list: blocks whose field(s) changed from A to B, common to A&B"""
+    blockIDs = commonKeys(IDmapA, IDmapB)
+    return [i for i in blockIDs if didThisBlocksFieldsChange(IDmapA[i], IDmapB[i])]
+
+def didThisBlocksFieldsChange(blockA, blockB):
+    """Detect text field changes, whether strings or variable names, etc"""
+    fieldsA = blockA.findall(ns + 'field')
+    fieldsB = blockB.findall(ns + 'field')
+    for fA, fB in zip(fieldsA, fieldsB):
+        if fA.text != fB.text:
+            return True
+    return False
+\end{minted}
+\caption{Test for Text Field Changes}
+\end{listing}
+
+\begin{listing}[]
+\begin{minted}{python}
+def checkForChangedBlocks(IDmapA, IDmapB):
+    """Returns list: blocks that changed (not moved) from A to B, common to A&B"""
+    blockIDs = commonKeys(IDmapA, IDmapB)
+    return [i for i in blockIDs if didThisBlockChange(IDmapA[i], IDmapB[i])]
+
+def didThisBlockChange(blockA, blockB):
+    """True: blockA/B and their child Elements DIFFER, ignoring fields."""
+    sameBlockCheck(blockA, blockB)
+
+    # ElementEqual ignores x/y by default
+    if not ElementEqual(blockA, blockB):
+        return True
+
+    # This assumes blocks cannot be direct descendants of other blocks-
+    #   which seems to be true as blocks must be plugged into a value socket.
+    #   As a result, no filtering for non-block children is performed
+    childrenA = [e for e in blockA.findall('*') if e.tag != ns + 'field']
+    childrenB = [e for e in blockB.findall('*') if e.tag != ns + 'field']
+
+    if len(childrenA) != len(childrenB):
+        return True
+
+    for childA, childB in zip(childrenA, childrenB):
+        if not ElementEqual(childA, childB):
+            return True
+
+    # passed all tests without finding a change, so it must not have changed.
+    return False
+\end{minted}
+\caption{Test for Properties Modified}
+\label{src:lst:properties-modified}
+\end{listing}
+
+%%%%% Whole-file code listings from early version of the proposal. %%%%%
+
+% \section{Modifications to App Inventor}
+% \label{src:appinventor}
+
+% \subsection{snapshot.js}
+% \label{src:ai/snapshot.js}
+% This file was added to the blockly editor within App Inventor, and provided the snapshot collection and transmission features. The public function is \emph{Blockly.Snapshot.send,} which was called elsewhere in blockly to trigger a snapshot. As listed below, the feature will connect to a local test server. For production, the comments on line 13 and 14 were swapped, allowing connection to the real data collection server. 
+% \inputminted{javascript}{src/appinventor/snapshot.js}
+
+% \subsection{Modifications to BlocklyPanel.java}
+% \label{src:ai/BlocklyPanel.java}
+% This file provided the interface between the general App Inventor web page, including the Designer, and the javascript blockly environments. The page and Designer were composed using the Google Web Toolkit (GWT), which was written in Java and compiled to javascript. The snapshot mechanism was implemented in the blockly environment, in pure javascript, but required access to certain data in the GWT environment. Modifications to this file exposed that data to blockly, and the snapshot system, as seen in the file excerpts below.
+
+% \inputminted[firstline=626, lastline=651]{java}{src/appinventor/BlocklyPanel.java}
+% \inputminted[firstline=902, lastline=913, breakbefore=.]{java}{src/appinventor/BlocklyPanel.java}
+
+
+% \section{Snapshot Receiver Service}
+% \label{src:snapshot-service}
+% The Snapshot Service was the server-side receiving mechanism that de-identified and stored snapshots generated by App Inventor. This service was written in javascript for node.js.
+
+% \subsection{file.js}
+% \label{src:file.js}
+% RPC module that implements the \emph{file.saveProject} API endpoint. It takes raw snapshot data, applies the de-identifier, and saves the snapshot to disk.
+% \inputminted{javascript}{src/snapshot-service/file.js}
+
+% \subsection{userdb.js}
+% \label{src:userdb.js}
+% De-identifies user names, replacing them with unique code names, and stores the relationship in a database.
+% \inputminted{javascript}{src/snapshot-service/userdb.js}
+
+% \subsection{savegit.js}
+% \label{src:savegit.js}
+% Provides utilities to interface with git on the server to save data. Each user's project is represented by a git repository, and each snapshot creates a new commit in that repository. This is used by file.js.
+% \inputminted{javascript}{src/snapshot-service/savegit.js}
+
+% \subsection{gc.sh}
+% \label{src:gc.sh}
+% The additive git method used by this service creates inefficiencies on the host file system that consumes space and inodes at a high rate. This script `garbage collects' the database, repacking it efficiently, and should be run occasionally while the system is in use. This file is included here as a warning to anyone in the future who wants to use git as a database.
+% \inputminted{bash}{src/snapshot-service/gc.sh}
+
+
+% \section{Analysis Tools}
+
+% \subsection{main.py}
+% %TODO This needs to be updated when the scrips change! Make sure this is re-copied latex directory before final thesis print!
+% This is currently an in-progress version of this file, containing provisional scratchwork and some in-development modifications. These temporary features will be removed and replaced with restored, fully consistent code for the final dissertation document.
+% \inputminted[lastline=212]{python}{src/analysis/main.py}
+
+% \subsection{gitfilter.py}
+% \inputminted[lastline=168]{python}{src/analysis/gitfilter.py}
+% \subsection{xml\_analyze.py}
+% \inputminted[lastline=261]{python}{src/analysis/xml_analyze.py}
+
+
+% \section{Snapshot Playback}
+% The playback mechanism allowed a full history of snapshots from a project to be viewed in an App Inventor blockly window. It enabled the researcher to step through the history- forward, backwards, and arbitrarily, displaying the code blocks as the user placed them. Additionally the mechanism displayed the timestamp of the current snapshot, in seconds since the project was created, how many snapshots were taken, and what number snapshot was currently being viewed.
+
+% This file, \emph{playback.js,} was added to the blockly editor within App Inventor, and provided the playback feature. It used the javascript console to start and control playback.
+% \label{src:playback.js}
+% \inputminted{javascript}{src/playback/playback.js}

@@ -133,7 +133,7 @@ This activity did not have the prior testing and validation that the debugging a
 \section{The Data Collection System}
 One mission of this project was to build instrumentation into App Inventor to collect rich student programming behavior data as the students program. This instrumentation added to a growing tradition of instrumentation within the development environment itself, such as the works of \citet{berland-2013}, \citet{lipman-phd}, and others. The system collected a \emph{snapshot} on every change the user made to their app. With each snapshot, the entire contents of their source files (excluding media assets) were transmitted to a secure research server where they were de-identified and stored. This collection of snapshot data is the corpus from which relevant features were extracted for analysis.
 
-\subsection{Modifications to App Inventor}
+\subsection{Snapshot Capture in App Inventor}
 \label{sec:mod-ai}
 Instrumentation was added to App Inventor, inspired by \citet{piech-2012}. Every time the user changed anything, for example: move a block, add a block, or modify a component, a snapshot was triggered, and the project state was captured. A single snapshot contained the entire block workspace and designer configuration in text form. Assets, including images uploaded, were not included. The basic architecture of the snapshot capture process are seen in Figure \ref{fig:snapshot-arch}.
 

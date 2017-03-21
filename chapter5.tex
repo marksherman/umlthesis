@@ -1,19 +1,40 @@
 \chapter{Discussion}
 	
-%\section{Conclusions}
+The change-type features that were extracted from these data would likely be useful in a study where an independent variable describing a behavior of interest could be collected. Such an experiment could be looking for off-task behavior, comparing expert and novice patterns, studying a particular class of common mistake, or any other pattern. With tightly-controlled observations to record the ground truth of the behavior in question, change-type data such as these could be mined against that ground truth to find corresponding relationships. 
 
+A teacher-ready product using particle analysis would consist of a library of solution particle definitions matching activities from the curriculum. The curriculum for App Inventor is largely stable, if varied, and creating solution particle definitions for the most common assignments would benefit teachers active in many different curriculum programs. 
+
+Adding custom definitions of solution particles to match specific activities would require, in its current form, a researcher or developer to design the particles. However, this is not due to the particles being difficult to imagine, but the degree of complexity of the tools with which the particles are currently defined. The elements that make up particles are already defined, abstracted entities that do not require direct manipulation of the underlying blocks representation. One slight exception is the ``close enough'' text comparator, which was hard-coded with allowable edit distances to work effectively with the strings present in these activities. It would require a bit more generalization to meet the other elements. But with some wrapping and smoothing, a small language could be developed to express all possibilities of solution particles in a way that would be more accessible to curriculum developers. An even better tool would be able to capture a solution directly from App Inventor and disassemble it into constituent particles automatically. This tool would be the most accessible, and anyone who knows App Inventor to also define canonical solutions for use in the particle analyzer, and with that, the classroom console. 
+
+\section{Evaluating the Classroom Console}
+% assert console is good, using:
+%	Teacher "focus group" feedback
+%	Comparison against design goals from literature - Dillenbourg
+
+
+\section{Conclusions}
 
 %\section{Recommendations} 
 % \label{sec:recommendations}
-% We do not recommend using git as a database. Further recommendaitons of legitimate scientific and educational merit will be added as part of the full dissertation.
+% We do not recommend using git as a database. Further recommendations of legitimate scientific and educational merit will be added as part of the full dissertation.
 
-
-\section{Future Work, beyond this dissertation} % TODO reduce to just "future work" after proposal
+\section{Future Work}
 \label{sec:futurework}
 
-As previously mentioned, there is ample future work to be done in understanding the reasoning behind behavior choices, with particular support to misattribution of failure and success. Investigation into this misattribution should be conducted, to use traditional methods of assessing student mindset combined with the power of fine-grain snapshot analysis. 
+As previously mentioned, there is ample future work to be done in understanding the reasoning behind behavior choices, with particular support to mis-attribution of failure and success. Investigation into this mis-attribution should be conducted, to use traditional methods of assessing student mindset combined with the power of fine-grain snapshot analysis. 
 
-\subsection{Better fine-grain collection of snapshot data} 
+\subsection{Classroom Console and Learning Management Systems}
+Different kind of research, but there still is possibility some lit-backed research on how to do this effectively. Take a stab with some lit right here.
+
+\subsection{Solution Particles as Indicators for Further Analysis}
+The particle analysis method is, at its core, a feature extractor for snapshot data. For every snapshot, it provides an indicator of progress. That measure of progress has potential to be used to advance real-time classroom tools, and to inform future research. 
+
+One example would be to use solution particle scores as an indicator for same-state. If a student returns to an identical or near-identical state of their code, that student may be experiencing some sort of flailing, in the form of a non-productive iterative behavior. Detecting a return to a previous state is certainly possible from snapshot data, but is potentially computationally expensive. The fast particle scores could serve as a beacon, and could be used as a signal to automatically deploy the more expensive same-state algorithm. The solution scores could reduce the set of possible comparisons for a given snapshot state dramatically, likely allowing it be performed in real-time. This measure could be added to the classroom console or other teacher analytic tool to add richness to the teacher's view of the students' behavior. 
+%TODO find some lit references about same-state detection in programming?
+
+The particle score could also be used as a variable for future experiments, and could help to uncover patterns of other properties that correspond with progress made, stalled, or regressed. One such study could take the scores over time in post-hoc data, and encode periods of those histories into states abstract states, describing patterns in the scores, such as flat changes (active non-improvement), fast progress, and regression. These states could be used in in a machine learning experiment to extract correlating patterns in other data, similar to \citet{tissenbaummodeling}, hopefully revealing properties that may be related to those behaviors.
+
+\subsection{Better Fine-grain Collection of Snapshot Data} 
 In this work, the entire project was captured on every change, which created a need to reverse-engineer what changes occured between snapshots post-facto. Upcoming updates to Blockly will allow for easier access to succinct event descriptions, potentially allowing only the changes themselves to be sent, effectively reducing the transmission payload and increasing transparency of collected data. Such improvements can make future collection experiments easier, and provide data that is richer for analysis, with no loss in accuracy. 
 
 \subsection{Novice and Expert Behaviors}
