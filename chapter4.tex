@@ -32,7 +32,7 @@ Data was imported from the git database into the analysis environment using a pr
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{diagrams/data-import-process}
-  \caption[The Data Importing Process]{The data importing process. The entire database was scanned for projects that contain an identifiable element, which were then loaded directly from git. Each change from git was processed for error mitigation and necessary metadata generation, then the features were extracted. After feature extraction, character-wise text field changes were reduced, and then the interval times between snapshots were generated.}
+  \caption[The data importing process]{The data importing process. The entire database was scanned for projects that contain an identifiable element, which were then loaded directly from git. Each change from git was processed for error mitigation and necessary metadata generation, then the features were extracted. After feature extraction, character-wise text field changes were reduced, and then the interval times between snapshots were generated.}
   \label{fig:data-import-process}
 \end{figure}
 
@@ -130,7 +130,7 @@ To combat this over-representation, sequences of character-wise change events ne
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{images/ch4-text-fields}
-  \caption[Examples of Text Fields in App Inventor]{Examples of some text fields in App Inventor. All of the fields, represented by the text in shaded bubbles, could be edited arbitrarily by the student.}
+  \caption[Examples of text fields in App Inventor]{Examples of some text fields in App Inventor. All of the fields, represented by the text in shaded bubbles, could be edited arbitrarily by the student.}
   \label{fig:text-fields}
 \end{figure}
 
@@ -153,11 +153,11 @@ This approach has demonstrated a number of advantages:
 \item [Breadth] It evaluates blocks even when they are disconnected from executable paths, which contain useful information.
 \item [Solution-robustness] It is indicative of progress even if student arrives at a solution that doesn't exactly match the canonical solution.
 \item [Problem-robustness] Gift code is accommodated, and with it can show regression below starting point.
-\item [Independence] Instructor help doesn't matter for the study, as progress is detectable without needing to know where it came from.
+\item [Independence] Instructor intervention doesn't affect quality fo data, as progress is measured without needing to know where it came from.
 \end{description}
 
 \subsection{Definition of Flailing}
-Flailing is a period of changes over time without improvement in the solution fragment score.
+Flailing is a period of changes over time without improvement in the solution fragment score. %TODO more
 
 
 \subsection{Example Case Analysis}
@@ -235,4 +235,47 @@ Determining if a text string was equal to the solution's string was less straigh
 
 \section{The Classroom Console}
 \label{sec:classroom-console}
+
+\begin{figure}
+  \centering
+      \includegraphics{images/ch4-console-demo}
+  \caption[Excerpt of the Classroom Console]{An excerpt of the Classroom Console visualization, showing three students.}
+  \label{fig:console-demo}
+\end{figure}
+
+
+Based on the insights afforded by the particle analysis method, an orchestration technology was designed. Orchestration, as \citeauthor{dillenbourg2012design} described, ``refers to how a teacher manages in real-time multi-layered activities in a multi-constraints context" (\citeyear{dillenbourg2012design}). In the general case of App Inventor classrooms, teachers need to manage many levels of technology in addition to the difficult task of managing class-wide pedagogy, and the scaffolding of specific students as necessary. The orchestration technology developed here aims to support the activity of orchestrating \citep{tchounikine2013clarifying}.
+
+The orchestration technology is referred to as the Classroom Console. An excerpt of the console is shown in Figure \ref{fig:console-demo}. This console, at a glance, gives teachers insight into the status of individual students and the class as a whole. Multiple dimensions of information are presented with visualization strategies that we believe are aggregated to a degree that makes it useful lightweight to use. The goals of the console are follows, for each student, it must display:
+
+\begin{description}
+\item [Current particle score] The primary display element is the student's current score. This is updated in real-time as they work.
+\item [Time since score advanced] A ``timeout bar'' accompanies the score display, showing how much time has elapsed since the score has increased.
+\item [Active or away] The timeout bar changes color to indicate whether the student is working actively or idle.
+\end{description}
+
+Additionally, the console must give the teacher a ``landscape view'' of the entire class. The visual score bars for each student are easily assessed as a group, so approximate progress of the entire class can be seen at a glance. If all the bars are low, then the class in general is either at the beginning, or may be in need of a class-wide clarification or hint. 
+
+\subsection{Pre-Recorded Data}
+This tool was a conceptual mockup. It did not work with live-collected data, but did operate on previously collected data from the study. The console as seen here is effectively a replay device, playing back real classroom data that were collected in real time. The data were genuine, and the timings expressed were the real-time observations of real students in their environments. This platform is ideal for design discussion. Connecting this concept to a live learning management environment is reserved for future work. 
+
+\subsection{The Console in Detail}
+A single student's display is annotated in Figure \ref{fig:console-single-annotated}. It shows the student's identifier, which could be their name (a), their current score on the problem from particle analysis (b), and a timeout bar (c). The timeout bar fills in one-minute intervals, starting with zero. The timeout bar also changes color to reflect when the student is no longer actively working, and has become idle. This ``away'' indicator can be seen in Figure \ref{fig:console-demo}, where the first two students are active and the third is away. The third student's idle bar is a lighter color.
+
+A full classroom of 29 students is shown in Figure {fig:console-classroom}. There are many stories that can be deduced from this single moment. At the time of capture, many students had completed or near-completed the activity, indicated by the prevalence of tall blue bars. Students KermanshahCo, KobeSalamander, and PhoenixWeasel were examples of students who had completed the activity, and then became idle. Logically, at the conclusion of the activity these students became idle, as they had nothing left to do. They may have been elsewhere in the classroom, but were no longer engaging with App Inventor. Conversely, TaizhouSwallow, located in the lower-left corner of the Console, appeared to be having difficulty. This student is showing a low score, and has also been actively working with no forward progress for five minutes or more. Students with no indicators in the timeout bar, such as PointeCheetah and ShiheziBat in the middle row, had progressed their scores forward within the last minute. Every block in the timeout bar represented one minute of time, and a full bar of five blocks indicated five or more minutes without progress. 
+
+\begin{figure}
+  \centering
+      \includegraphics{images/ch4-console-single-annotated}
+  \caption[One student display, annotated]{One student's display from the Classroom Console. }
+  \label{fig:console-single-annotated}
+\end{figure}
+
+
+\begin{figure}
+  \centering
+      \includegraphics[width=\textwidth]{images/ch4-console-class}
+  \caption[Full classroom display of the Classroom Console]{A full classroom of 29 displayed in the Classroom Console.}
+  \label{fig:console-classroom}
+\end{figure}
 

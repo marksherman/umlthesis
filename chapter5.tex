@@ -10,7 +10,40 @@ Adding custom definitions of solution particles to match specific activities wou
 % assert console is good, using:
 %	Teacher "focus group" feedback
 %	Comparison against design goals from literature - Dillenbourg
+The researchers recruited a small group of instructors who use App Inventor in their classrooms to see, discuss, and evaluate the Classroom Console. They were interviewed individually, where they were shown the some brief background, the particle assessment concept, a demonstration of the Console. Their reactions were overwhelmingly positive, where the most common question was a form of ``when can I use this?'' The instructors also provided criticism, identified potential weaknesses in the design, and engaged in discussion on how to overcome those weaknesses. One instructor, during the demonstration said, ``I can see right now two students I want to go talk to.'' These discourse are summarized below.
 
+The focus group instructors had two middle school teachers, two middle and high school specialty teachers, two high school and undergraduate instructors, and one undergraduate professor in charge of five lab sections. Their localities included the United States east coast and Midwest, and South America. 
+
+Concerns raised by teachers: 
+\begin{itemize}
+\item This tool makes it easy to identify high-performing students who can be tasked to help their struggling peers. (Researchers did not realize the tool could be used to identify exemplary performance just as easily as flailing.)
+\item Easily identifies ``needy'' students, who ask for help immediately without first trying on their own. %TODO there is definitely a term for this
+\item Sometimes you only see students every 8-9 school days, so catching idle periods of mere minutes can be critical. 
+\item It is possible for a student who is disengaged to be sitting next to an engaged student, and they both look like they're engaged.
+\item When a student returns from a bathroom break, the tool can help assess how quickly they resume engagement.
+\item Greatly aids cases where students don't do anything because they know they can get away with it.
+\item Training instructors to use the tool may be non-trivial, especially when requiring them to develop their own activities with it. 
+\item As the tool is an inexact proxy, experience with the tool may increase the instructor's efficacy with it.
+\item High school students are especially afraid to fail, so they often choose not to try anything. This helps identify that behavior.
+\item Student feedback often includes the complaint that they did not get enough attention. They could be feeling frustration that the instructor is not seeing, and this helps the instructor gain access into that.
+\end{itemize}
+
+Requested Features
+\begin{itemize}
+\item An automated flag to visually highlight students who are currently exhibiting significant flailing behavior.
+\item Flexibility in timeout bar. Some activities and classrooms will have different time frames that would be considered concerning.
+\item Treatment for score regression, which is currently not highlighted. 
+\item Take the start point with gift code into consideration, and flag the teacher if the student drops below that point, as they have broken their starting configuration and likely need help restoring it.
+\item History so teachers can replay or otherwise visual past classroom sessions, and compare them over time. Line chart of the session.
+\item HReporting to demonstrate a student's progress in labs over time, suitable for program assessment. 
+\item Control over layout, so student locations in Console reflect the seating plan of the classroom.
+\item Ability to define your own activities and their corresponding solution particles.
+\item Pseudo-anonymized student identifiers, such that the console could be displayed on the projector while the teacher moves around the room.
+\end{itemize}
+
+One analysis idea presented by an instructor was to display the \emph{number of attempts} at a certain point of a problem, which would allow the teacher to expect and allow a certain number of attempts before requiring intervention. This method would require further work to better define what an ``attempt'' should mean in general context, and in an activity-specific context.
+
+The instructors were overall excited about the tool, and raised real-world concerns that could further inform the design of the Classroom Console. The instructors declared that the design was ready for prototype use, all citing their desire to use it to enhance their teaching practice.
 
 \section{Conclusions}
 
@@ -33,6 +66,11 @@ One example would be to use solution particle scores as an indicator for same-st
 %TODO find some lit references about same-state detection in programming?
 
 The particle score could also be used as a variable for future experiments, and could help to uncover patterns of other properties that correspond with progress made, stalled, or regressed. One such study could take the scores over time in post-hoc data, and encode periods of those histories into states abstract states, describing patterns in the scores, such as flat changes (active non-improvement), fast progress, and regression. These states could be used in in a machine learning experiment to extract correlating patterns in other data, similar to \citet{tissenbaummodeling}, hopefully revealing properties that may be related to those behaviors.
+
+One such design could use a Hidden Markov Model to determine the threshold for automatic flailing detection. This auto-detection could then flag students above threshold in the Classroom Console, further aiding the teacher in deciding where to direct their resources. Inputs to this method would be the particle score graph, or segments of it, with specific measures extracted: interval since last frame, score increase, score decrease, or score the same. 
+
+Further investigation should be given to conditions where students ``win'' at flailing--- when a non-advancing set of changes yields and does not yield advancement. This may be possible with the data from this study. Hypotheses include that flailing/play periods will be different per assignment, and there may be a method, such as the one in the above paragraph, to determine what is reasonable for a particular assignment. 
+
 
 \subsection{Better Fine-grain Collection of Snapshot Data} 
 In this work, the entire project was captured on every change, which created a need to reverse-engineer what changes occured between snapshots post-facto. Upcoming updates to Blockly will allow for easier access to succinct event descriptions, potentially allowing only the changes themselves to be sent, effectively reducing the transmission payload and increasing transparency of collected data. Such improvements can make future collection experiments easier, and provide data that is richer for analysis, with no loss in accuracy. 
