@@ -135,6 +135,9 @@ To combat this over-representation, sequences of character-wise change events ne
 \end{figure}
 
 
+\section{Manual Assessment}
+
+
 
 \section{The Particle Analysis Method}
 \label{sec:particle-analysis}
@@ -145,7 +148,7 @@ With this insight, and the constraint it brought, design began for both a visual
 
 
 \subsection{Features}
-Particle analysis offered a number of advantages. It offered an assessment of student progress over time of an activity. This metric was a fact of the student's approximate position within the activity at hand, and when charted over time created a compelling illustration of that student's story. 
+Particle analysis offered a number of advantages. It offered an assessment of student progress over time during a programming activity. This metric could easily be charted over time, which created compelling illustrations of that student stories. 
 
 This approach has demonstrated a number of advantages:
 \begin{description}
@@ -153,7 +156,7 @@ This approach has demonstrated a number of advantages:
 \item [Breadth] It evaluates blocks even when they are disconnected from executable paths, which contain useful information.
 \item [Solution-robustness] It is indicative of progress even if student arrives at a solution that doesn't exactly match the canonical solution.
 \item [Problem-robustness] Gift code is accommodated, and with it can show regression below starting point.
-\item [Independence] Instructor intervention doesn't affect quality fo data, as progress is measured without needing to know where it came from.
+\item [Independence] Instructor intervention doesn't affect quality of data, as progress is measured without needing to know where it came from.
 \end{description}
 
 \subsection{Definition of Flailing}
@@ -183,7 +186,7 @@ The only way to know for sure what these specific behaviors mean is to conduct a
 
 
 \subsection{How it Works}
-This method worked by scanning the entire blocks workspace for individual blocks that were relevant to the canonical solution to the given problem. Each ``atom'' scored a point simply for existing somewhere on the workspace. If that atom was also in its correct location, meaning it had the correct type of block as its parent, and additional point would be added to the score. This technique could be used to arbitrarily nest atoms into others to make code molecules. 
+This method worked by scanning the entire blocks workspace for individual blocks that were relevant to the canonical solution to the given problem. Each ``atom'' scored a point simply for existing somewhere on the workspace. If that atom was also in its correct location, meaning it had the correct type of block as its parent, an additional point would be added to the score. This technique could be used to nest atoms into others to make code molecules. These molecules could be represented by any number of atoms, which allowed solutions of any degree of complexity to be described.
 
 \begin{figure}
   \centering
@@ -200,7 +203,7 @@ In its current implementation, up to two additional position tests could be run 
   \label{fig:particle-run3}
 \end{figure}
 
-The tests themselves come in two categories: ``find,'' which looked for certain blocks (the atom finder), and ``in a,'' which tested whether a block was ``in a'' specific parent block type. Additionally, there were helper routines of type ``this is'' which were used by the ``find'' and ``in a'' tests. The list of solution-defining particle tests is presented in Table \ref{tab:particle-tests}. In Figure \ref{fig:particle-run3}, test 1 must always be of the ``find'' type, and all subsequent tests must be of the ``in a'' type. 
+The tests themselves come in two categories: ``find,'' which looked for certain blocks (the atom finder), and ``in a,'' which tested whether a block was ``in a'' specific parent block type. Additionally, there were helper routines of type ``this is'' which were used by the ``find'' and ``in a'' tests. The current list of solution-defining particle tests is presented in Table \ref{tab:particle-tests}. In Figure \ref{fig:particle-run3}, test 1 must always be of the ``find'' type, and all subsequent tests must be of the ``in a'' type. 
 
 \begin{table}
 \begin{centering}
@@ -226,6 +229,9 @@ The tests themselves come in two categories: ``find,'' which looked for certain 
 	\label{tab:particle-tests}
 \end{centering}
 \end{table}
+
+This testing schema included a somewhat nuanced handling of variation, to account for scenarios where students had multiple blocks that satisfied the atom finder. Each test will score a single point if there are one or more blocks that satisfy the test on the workspace. If there are more than one atoms that satisfy a ``find'' test, each subsequent position test would reduce that set. Each test scored as true when the resulting set was non-empty. This method prevents over-rewarding duplicate code by preventing any test from evaluating more than once. Additionally, this provides a reliable maximum score for a given solution definition. This design does not fully handle solution definitions that have repetitive molecules. As an example, if a solution definition were to be written that had two molecules, based on two of the same atom type, but in different locations, it would be possible for a single block to trigger true for both of those ``find'' tests and score two points, which would be a slight over-reward. The over-reward would not persist once the position tests, which must differ, evaluate. This scenario would still render a useful approximation of student progress, though slightly reduced in accuracy. However, if a solution were to call for multiple molecules that evaluate identically, only one implementation would currently be necessary to pass all of those tests. In this scenario, additional differentiating tests would need to be added to the definition, and possibly the evaluation engine, in order to provide a valid progress approximation. 
+This logic is also described in Figure \ref{fig:particle-run3}. 
 
 Implementation of these tests varied depending on what properties needed to be evaluated, but they all used helper tools to analyze the XML structure of the blocks workspace. Atom-finding tests were mostly a simple as checking each block for its designating property. Which property needed to be checked varied depending on the type of block, but they were all simple, constant-time reads. The position evaluators (``in a'' tests) were similarly simple, where each block's parent was looked up using the pre-rendered parent mapping structure, and the type of the parent was tested in the same fashion as the ``find'' tests. 
 

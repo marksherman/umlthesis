@@ -6,6 +6,21 @@ A teacher-ready product using particle analysis would consist of a library of so
 
 Adding custom definitions of solution particles to match specific activities would require, in its current form, a researcher or developer to design the particles. However, this is not due to the particles being difficult to imagine, but the degree of complexity of the tools with which the particles are currently defined. The elements that make up particles are already defined, abstracted entities that do not require direct manipulation of the underlying blocks representation. One slight exception is the ``close enough'' text comparator, described in Section \ref{sec:close-enough-text}, which was hard-coded with allowable edit distances. It would require a bit more generalization to meet the other elements. But with some wrapping and smoothing, a small language could be developed to express all possibilities of solution particles in a way that would be more accessible to curriculum developers. An even better tool would be able to capture a solution directly from App Inventor and disassemble it into constituent particles automatically. This tool would be the most accessible, and anyone who knows App Inventor to also define canonical solutions for use in the particle analyzer, and with that, the classroom console. 
 
+
+\section{Detailed Case Analysis}
+% overlayed graph with groups of probably-had-intervention and probably-figured--it-outontheir own (temperature activity)
+% Temp activity was largey got it or didn't, and if you didn't, you needed an intervention. The debug activity was more continuous.
+%
+% idea: Statistically identify the "elbow" or corner where graph turns upright, and chart where those happen, and group. 
+%		probably a curve-fit to the elbow function, with a parameter - "the logistic function"
+%
+%TODO here we will go into depth on 2-3 student stories, using:
+% notes from Ashley's assessment / mark's distilled codes
+% code playback visual to show what they were doing
+% particle analysis graphs, matched to code playback
+% Tell their stories!
+
+
 \section{Evaluating the Classroom Console}
 % assert console is good, using:
 %	Teacher "focus group" feedback
@@ -59,6 +74,9 @@ As previously mentioned, there is ample future work to be done in understanding 
 \subsection{Classroom Console and Learning Management Systems}
 Different kind of research, but there still is possibility some lit-backed research on how to do this effectively. Take a stab with some lit right here.
 
+\subsection{Towards Programming Skill Assessment}
+Someday may have an entire curriculum of activities, and data of kids doing these activities over time. Collected in aggregate for research purposes, could start to isolate skills that are exercised by different activities, and begin to understand how those skills are developing over the course of a curriculum.
+
 \subsection{Solution Particles as Indicators for Further Analysis}
 The particle analysis method is, at its core, a feature extractor for snapshot data. For every snapshot, it provides an indicator of progress. That measure of progress has potential to be used to advance real-time classroom tools, and to inform future research. 
 
@@ -70,6 +88,8 @@ The particle score could also be used as a variable for future experiments, and 
 One such design could use a Hidden Markov Model to determine the threshold for automatic flailing detection. This auto-detection could then flag students above threshold in the Classroom Console, further aiding the teacher in deciding where to direct their resources. Inputs to this method would be the particle score graph, or segments of it, with specific measures extracted: interval since last frame, score increase, score decrease, or score the same. 
 
 Further investigation should be given to conditions where students ``win'' at flailing--- when a non-advancing set of changes yields and does not yield advancement. This may be possible with the data from this study. Hypotheses include that flailing/play periods will be different per assignment, and there may be a method, such as the one in the above paragraph, to determine what is reasonable for a particular assignment. 
+
+TODO possible integrity violation detection- it may be possible to use instrumentation to detect the spread of code artifacts physically through the classroom, which could be indicative of integrity, or simply teach us how concepts move through a classroom. Just looking at code playback, there are projects that intuitively ``look like'' they might be engaged in copying solutions. This intuition is based on sudden appearance of code artifacts after somewhat long periods of inactivity. 
 
 
 \subsection{Better Fine-grain Collection of Snapshot Data} 
