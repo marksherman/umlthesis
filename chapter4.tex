@@ -10,22 +10,6 @@ The process of generating the extracted features, which served as the raw data f
 
 \section{Data Processing Pipeline}
 \label{sec:data-processing}
-% Data Pipeline:
-% filter to relevant projects in database ->
-% processProject:
-%	load change contents from git
-%		fix trailing xml corruption
-%		checks for empty blocks, only includes if not-empty
-%		generate IDmaps and parentmaps
-%	extract changes
-%		check for:
-%			added/Deleted blocks
-%			movedblocks
-%			contextMove
-%			changedblocks
-%			fieldchanges
-% 	reduceFieldChanges
-%	generateChangeIntervals
 
 Data was imported from the git database into the analysis environment using a process shown in Figure \ref{fig:data-import-process}. The key step of this process was ``Extract change features,'' where the tests for the types of changes in that snapshot were executed. Feature extraction is described in detail below in Section \ref{sec:feature-extraction}.
 
@@ -44,7 +28,7 @@ Once a list of projects were identified using their unique elements, those proje
 
 Each snapshot was checked for corruption at time of import. Following that, two metadata maps were generated for each snapshot: a map of block ID numbers, and a map of block parents. These maps allowed the feature extractor to easily access a block by its ID number (which would require a full tree traversal without), and easily look up the parent of any given block. With the maps generated, the feature extractor would then be able to run. 
 
-After feature extraction, the text field events were reduced (described below), and finally, with the snapshot set complete, interval times between snapshots were generated.
+After feature extraction, the text field events were reduced (described below), and finally, with the snapshot set complete, interval times between snapshots were generated. At the completion of these stages, the data were ready for analysis, two more steps were first taken. It appeared in data that more than one project was found per user name, possibly due to computer sharing during the summer camp, when a student would do the activity, then switch off with a partner who would then do it for themselves in a fresh copy of the project. To accommodate this, project names had to be made unique, which was accomplished by adding numbers to duplicate user names found in the database. Finally, projects were trimmed to ensure only data from the first session were considered. This condition was rare, and always took the form of a student opening the project the following day, doing nothing, and closing it or switching to another project. These extra snapshots were removed by trimming any snapshots that occurred beyond one hour after the project was initialized. 
 
 Most stages of the import process were additive and non-destructive, so at the conclusion of import each project and snapshot had all of the data available at all previous steps. For instance, the raw block contents were not lost during feature extraction; the list of features were added to the data structure alongside it. 
 
@@ -64,7 +48,7 @@ The two above corruptions were easily mitigated. A third mode of corruption, how
 
 One project was particularly egregious, and showed this corruption in 71 of its 245 commits, rendering nearly a third of its data unreliable. That project was removed, which left only 50 such potential errors in the remainder of the database, many of which were mitigated by text field accumulator, described in Section \ref{sec:text-acc}. 
 
-A data consistency bug was found where a project was opened over more than one session. In App Inventor, if a project was opened in a second, disjoint session, such as the following day, the block ID numbers change, causing the feature extractors to falsely over-report blocks being deleted and added, when really the same blocks have been re-numbered. The strategy employed was to ignore snapshots that occurred at a timestamp beyond the maximum time of the activity.
+A data consistency bug was found where a project was opened over more than one session. In App Inventor, if a project was opened in a second, disjoint session, such as the following day, the block ID numbers change, causing the feature extractors to falsely over-report blocks being deleted and added, when really the same blocks have been re-numbered. The strategy employed was to ignore snapshots that occurred at a time stamp beyond the maximum time of the activity.
 
 The total percentage of potentially erroneous snapshots in the debugging activity dataset was 0.84\%. These are summarized in Table \ref{tab:data-corruption}.
 
@@ -108,7 +92,7 @@ The total percentage of potentially erroneous snapshots in the debugging activit
 \label{tab:features-extracted}
 \end{table}
 
-The features extracted by this module were listed and described above in Figure \ref{tab:features-extracted}. This section outlines the specific definitions that constitute the feature tests. All of these tests operated on snapshots of the same project that were adjacent in time. They detected differences between the two, often utilizing the metadata maps described above in Section \ref{sec:data-processing}. Source code for these algorithms are presented in Appendix \ref{src:feature-extraction-tests}.
+The features extracted by this module were listed and described above in Figure \ref{tab:features-extracted}. This section outlines the specific definitions that constitute the feature tests. All of these tests operated on snapshots of the same project that were adjacent in time. They detected differences between the two, often utilizing the meta data maps described above in Section \ref{sec:data-processing}. Source code for these algorithms are presented in Appendix \ref{src:feature-extraction-tests}.
 
 The test for \emph{Blocks Added} and \emph{Blocks Deleted} were the same routine, which assembled a list of blocks by their ID numbers for both snapshots and compared differences between those lists using set arithmetic. 
 
@@ -136,6 +120,26 @@ To combat this over-representation, sequences of character-wise change events ne
 
 
 \section{Manual Assessment}
+To get a feel for the data collected, all student projects were inspected by researchers using the snapshot playback mechanism described in Section \ref{sec:playback}. Looking at the students' blocks and their changes over time, researches took note of projects that demonstrated flailing behavior and projects with strong efficacy towards solving the problem. The remaining projects were considered typical. This analysis did not utilize a rubric, nor was intended to be absolute nor complete, as it relied entirely on judgment by the researcher. It did serve to develop an understanding of common patterns, which will be discussed in Section \ref{sec:patterns}. This assessment was necessary to develop the in-depth analysis techniques and visualizations described in sections below. The flailing behaviors were characteristically repetitive, where blocks would move in ways that did not change or improve the state of the app. The high-efficacy behaviors were easier to characterize, as the solution became closer to correct.
+
+In detail, manual assessment rated projects efficacy ``ok,'' ``good,'' ``great,'' or none, and rated repetitive, and/or nonproductive behavior as ``flailing,'' ``extreme flailing,'' ``disengaged,'' ``lacking traction,'' or none. For analysis of these ratings, they were grouped together, where ``good and great'' were a single category, as were all forms of flailing, disengagement, or low traction. All other codes and projects were considered ``typical.'' The counts of these code groups are shown in Table \ref{tab:manual-percentages}.
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{l rl rl}
+													& \multicolumn{2}{c}{Debugging} & \multicolumn{2}{c}{Temperature}  \\ \hline
+		Efficacy ``Good'' or ``Great''				& 31 	& (31\%) 	& 8 	& (29\%) 	\\
+		Flailing, Disengaged, or Lacking Traction	& 23 	& (23\%)	& 11 	& (39\%)	\\
+		Both of the above							& 4 	& (4\%)		& 1 	& (7\%)		\\
+		Uncoded	(typical)							& 52 	& (52\%)	& 11	& (40\%)
+
+	\end{tabular}
+	\caption[Coding Results from Manual Assessment of Playback Data]{Coding results from manual assessment of playback data.}
+	\label{tab:manual-percentages}
+\end{centering}
+\end{table}
+
+There was a small sample that was coded for both good efficacy and flailing, totaling four projects over the two activities. These projects showed a degree of flailing followed by correct solutions. These will be explored further in Section \ref{sec:case_analysis}.
 
 
 
@@ -163,7 +167,7 @@ This approach has demonstrated a number of advantages:
 Flailing is a period of changes over time without improvement in the solution fragment score. %TODO more
 
 
-\subsection{Example Case Analysis}
+\subsection{Example}
 
 \begin{figure}
   \centering
@@ -199,36 +203,11 @@ In its current implementation, up to two additional position tests could be run 
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{diagrams/particle-run3}
-  \caption[Particle analysis test running algorithm]{Model of the algorithm for running particle analysis tests. This shows the three-test variant. There were also one- and two-test variants, that worked similarly. Test 1 must always be a ``find'' test that looks for individual blocks. Tests 2 and 3 must be ``in a'' tests, which investigate the parent blocks to assess nesting location. Available tests are listed in Table \ref{tab:particle-tests}.}
+  \caption[Particle analysis test running algorithm]{Model of the algorithm for running particle analysis tests. This shows the three-test variant. There were also one- and two-test variants, that worked similarly. Test 1 must always be a ``find'' test that looks for individual blocks. Tests 2 and 3 must be ``in a'' tests, which investigate the parent blocks to assess nesting location. Available tests are listed in Table \ref{tab:particle-tests} in Appendix \ref{app:particle_definitions}.}
   \label{fig:particle-run3}
 \end{figure}
 
-The tests themselves come in two categories: ``find,'' which looked for certain blocks (the atom finder), and ``in a,'' which tested whether a block was ``in a'' specific parent block type. Additionally, there were helper routines of type ``this is'' which were used by the ``find'' and ``in a'' tests. The current list of solution-defining particle tests is presented in Table \ref{tab:particle-tests}. In Figure \ref{fig:particle-run3}, test 1 must always be of the ``find'' type, and all subsequent tests must be of the ``in a'' type. 
-
-\begin{table}
-\begin{centering}
-	\begin{tabular}{l l}
-		Atom Finders (first test)			& Position Evaluators (subsequent tests) \\ \hline
-		find number with value  			& in a division \\
-		find text ``StopShaking'' 			& in a division position A	(dividend)	\\
-		find text ``HowAreYou'' 			& in a division position B	(divisor)	\\
-		find subtraction 					& in a subtraction 	\\
-		find division 						& in a subtraction position A (minuend)	\\
-		find multiplication					& in a subtraction position B (subtrahend)	\\
-		find variable getter 				& in a multiplication	\\
-		find procedure call 				& in a procedure call	\\
-		find procedure definition			& in a procedure definition	\\
-		find TextBox getText 				& in a set label text 	\\
-		find Label setText					& in a textToSpeech speak	\\
-		find event Button Click				& in a button click event	\\
-		find event Accelerometer Shaking	& in an accelerometer shaking event 	\\
-		find TextToSpeech Speak				& 	\\
-
-	\end{tabular}
-	\caption[Particle solution tests]{Tests that currently make up the solution particle definitions.}
-	\label{tab:particle-tests}
-\end{centering}
-\end{table}
+The tests themselves come in two categories: ``find,'' which looked for certain blocks (the atom finder), and ``in a,'' which tested whether a block was ``in a'' specific parent block type. Additionally, there were helper routines of type ``this is'' which were used by the ``find'' and ``in a'' tests. In Figure \ref{fig:particle-run3}, test 1 must always be of the ``find'' type, and all subsequent tests must be of the ``in a'' type. 
 
 This testing schema included a somewhat nuanced handling of variation, to account for scenarios where students had multiple blocks that satisfied the atom finder. Each test will score a single point if there are one or more blocks that satisfy the test on the workspace. If there are more than one atoms that satisfy a ``find'' test, each subsequent position test would reduce that set. Each test scored as true when the resulting set was non-empty. This method prevents over-rewarding duplicate code by preventing any test from evaluating more than once. Additionally, this provides a reliable maximum score for a given solution definition. This design does not fully handle solution definitions that have repetitive molecules. As an example, if a solution definition were to be written that had two molecules, based on two of the same atom type, but in different locations, it would be possible for a single block to trigger true for both of those ``find'' tests and score two points, which would be a slight over-reward. The over-reward would not persist once the position tests, which must differ, evaluate. This scenario would still render a useful approximation of student progress, though slightly reduced in accuracy. However, if a solution were to call for multiple molecules that evaluate identically, only one implementation would currently be necessary to pass all of those tests. In this scenario, additional differentiating tests would need to be added to the definition, and possibly the evaluation engine, in order to provide a valid progress approximation. 
 This logic is also described in Figure \ref{fig:particle-run3}. 
@@ -238,6 +217,7 @@ Implementation of these tests varied depending on what properties needed to be e
 \label{sec:close-enough-text} %this belongs with the paragraph below wherever it ends up
 Determining if a text string was equal to the solution's string was less straightforward, as there were many slightly different variations in phrasing that were all conceptually correct. An example was the ``stop shaking me'' text from the Debugging Activity. This string was fed into a text to speech engine to be spoken aloud, so any capitalization or punctuation combination were equally acceptable. Additionally, variations like ``please stop shaking me,'' ``stop shaking me now'' were also conceptually correct. A literal string compare would have regarded those falsely as incorrect. To find strings that were ``close enough'' to the exemplar, a Levenshtein edit distance was used \citep{levenshtein1966binary}. Specifically, what was used was a python implementation of an algorithm proposed by \citet{hyyro2001explaining}, which implemented the Levenshtein distance. To find the acceptable edit distances for ``good enough,'' all strings were collected from all of the activity projects in the database, along with their computed edit distance from their respective exemplar strings. The researchers sorted by edit distance value for each exemplar set, and chose a value which best delineated strings that were variations from those that were wrong. The values were different for the two exemplars: ``stop shaking me'' required an edit distance less than 9, and ``how are you'' required an edit distance less than 4. This process would need to be improved for teachers or curriculum developers to implement their own particle definitions. The method used by the researchers to reach their desired threshold values could be automated using hidden Markov Models, where ``close enough'' and ``not close enough'' examples provided by the user could automatically be assessed for a reasonable threshold value.
 
+The test definitions used in this study are presented in Appendix \ref{app:particle_definitions}. 
 
 \section{The Classroom Console}
 \label{sec:classroom-console}

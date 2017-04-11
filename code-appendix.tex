@@ -67,6 +67,88 @@ Listing \ref{src:lst:field-change} presents the code used for the text field cha
 
 This algorithm was part of the post-hoc analysis tools, and was not part of the real-time assessment algorithm.
 
+\section{Particle Test Definitions for Activities}
+\label{app:particle_definitions}
+The solution particle definitions for the Debugging Activity and the Temperature Activity are given below. The tests currently available for use are listed in Table \ref{particle-tests}. 
+
+The Debugging Activity definition (Listing \ref{lst:debugging_test_definition}) is broken into three blocks, each of which represents a separate subgoal. If all were executed at the same time, the maximum score would be 16, but the solutions actually supersede previous ones, so a perfect solution is actually a score of 14. A score of 16 demonstrates a current weakness with the analysis, that a solution can still be over-represented, artificially inflating the score by a small amount.
+
+The Temperature Activity definition (Listing \ref{lst:temperature_test_definition}) only has one goal, so the maximum score is 27. This activity also has gift code, as indicated, so the starting score is 7. 
+
+\begin{listing}[]
+\begin{minted}{python}
+def score_debugging(snapshot):
+    e = snapshot['etree']
+    p = snapshot['parentmap']
+    score = 0
+
+    score += run_2(find_text_StopShaking, in_a_textToSpeech_speak, e, p)
+    score += run_2(find_TextToSpeech_Speak, in_a_accel_shaking, e, p)
+    score += run_1(find_event_Accel_Shaking, e)
+
+    score += run_2(find_text_HowAreYou, in_a_textToSpeech_speak, e, p)
+    score += run_2(find_TextBox_getText, in_a_textToSpeech_speak, e, p)
+    score += run_2(find_TextToSpeech_Speak, in_a_button_click, e, p)
+
+    score += run_2(find_TextBox_getText, in_a_set_label_text, e, p)
+    score += run_2(find_Label_setText, in_a_button_click, e, p)
+    score += run_1(find_event_Button_Click, e)
+    return score
+\end{minted}
+\caption{Debugging Activity Solution Particle Definitions}
+\label{lst:debugging_test_definition}
+\end{listing}
+
+\begin{listing}[]
+\begin{minted}{python}
+e = snapshot['etree']
+    p = snapshot['parentmap']
+    score = 0
+
+    score += run_3(find_number_value(5), in_a_division, in_a_division_position_A, e, p)
+    score += run_3(find_number_value(9), in_a_division, in_a_division_position_B, e, p)
+    score += run_3(find_number_value(32), in_a_subtraction, in_a_subtraction_position_B, e, p)
+    score += run_3(find_var_getter, in_a_subtraction, in_a_subtraction_position_A, e, p)
+    score += run_2(find_division, in_a_multiplication, e, p)
+    score += run_2(find_subtraction, in_a_multiplication, e, p)
+    score += run_2(find_multiplication, in_a_proc_def_ret, e, p)
+    score += run_1(find_proc_def_with_arg, e)
+    # beyond here is the off-screen gift code
+    score += run_2(find_TextBox_getText, in_a_proc_call_ret, e, p)
+    score += run_2(find_proc_call_with_arg, in_a_set_label_text, e, p)
+    score += run_2(find_Label_setText, in_a_button_click, e, p)
+    score += run_1(find_event_Button_Click, e)
+    return score
+\end{minted}
+\caption{Temperature Activity Solution Particle Definitions}
+\label{lst:temperature_test_definition}
+\end{listing}
+
+\begin{table}
+\begin{centering}
+    \begin{tabular}{l l}
+        Atom Finders (first test)           & Position Evaluators (subsequent tests) \\ \hline
+        find number with value              & in a division \\
+        find text ``StopShaking''           & in a division position A  (dividend)  \\
+        find text ``HowAreYou''             & in a division position B  (divisor)   \\
+        find subtraction                    & in a subtraction  \\
+        find division                       & in a subtraction position A (minuend) \\
+        find multiplication                 & in a subtraction position B (subtrahend)  \\
+        find variable getter                & in a multiplication   \\
+        find procedure call                 & in a procedure call   \\
+        find procedure definition           & in a procedure definition \\
+        find TextBox getText                & in a set label text   \\
+        find Label setText                  & in a textToSpeech speak   \\
+        find event Button Click             & in a button click event   \\
+        find event Accelerometer Shaking    & in an accelerometer shaking event     \\
+        find TextToSpeech Speak             &   \\
+
+    \end{tabular}
+    \caption[Particle solution tests]{Tests that currently make up the solution particle definitions.}
+    \label{tab:particle-tests}
+\end{centering}
+\end{table}
+
 
 \section{Feature Extraction Tests}
 \label{src:feature-extraction-tests}
@@ -102,7 +184,7 @@ def checkForMovedBlocks(IDmapA, IDmapB):
     return [i for i in blockIDs if didThisBlockMoveinSpace(IDmapA[i], IDmapB[i])]
 
 # Returns
-#   True: block is top-level and moved on workpace
+#   True: block is top-level and moved on workspace
 #   False: block was moved in or out of top-level (in/out of being nested)
 #   False: block is top level and coordinates did not change
 #   False: block is nested and stayed as such (though parent may have moved)
@@ -189,6 +271,10 @@ def didThisBlockChange(blockA, blockB):
 \caption{Test for Properties Modified}
 \label{src:lst:properties-modified}
 \end{listing}
+
+
+
+
 
 %%%%% Whole-file code listings from early version of the proposal. %%%%%
 
