@@ -11,7 +11,7 @@ The central research question asks how accurate of a flailing detector can be bu
 
 This question asks about \emph{flailing,} a behavior of making unproductive, sometimes random changes to the code, possibly elicited by the student being lost, and requiring teacher intervention. A thorough discussion of flailing and other behaviors will follow in Section \ref{sec:behaviors}.
 
-When a student is flailing, they are still on-task, but may need immediate intervention to return to productivity, and hypothetically, learning \citep{baker2004off, perkins-1986}. Detection of a flailing student, in real time, could be a useful tool for classroom teachers, who need to spend their class time judiciously. % TODO ref Orchestration
+When a student is flailing, they are still on-task, but may need immediate intervention to return to productivity, and hypothetically, learning \citep{baker2004off, perkins-1986}. Detection of a flailing student, in real time, could be a useful tool for classroom teachers, who need to spend their class time judiciously. 
 
 %The complete set of research questions is below, with classes presented in ascending order of research importance:
 
@@ -49,8 +49,13 @@ When a student is flailing, they are still on-task, but may need immediate inter
 \section{Approach}
 App Inventor was modified to include new instrumentation features, which captured snapshot data on every change that the user made to their code. These snapshots were transmitted to a collection server, where they were stored. Multiple cohorts of middle school students enrolled in formal and informal app development curricula were selected to participate in one or two short activities for this study. The project files from those activities, with full snapshot history, were were isolated for analysis. Features were extracted from the snapshot histories to be used in characterizing behavior. %TODO complete methodology (atomic analysis, console)
 
+A new feature extraction method was devised that estimates the student's proximity to the canonical solution of the activity. This method, called \emph{Solution Fragment Analysis}, provided an easily visualized and easily interpreted view into a student's progress over the course of the activity. This method was also computationally efficient, such that it can be implemented as a real-time feedback system for instructors.
+
+From the Solution Fragments, a visualization was created to allow post-hoc analysis of an individual over an assignment, or the class in aggregate. Another visualization was designed in the form of a Classroom Console, to provide teachers with useful, easily interpreted, real-time aid for their classroom orchestration. 
 
 \section{Hypothesis and Contributions}
+The author hypothesized that a ``flailing detector'' was possible using real-time, fine-grained analysis of students' edit operations while programming. This ``flailing detector'' was realized by applying a situational constraint that the students must be working on a known activity that has a canonical solution. Such problems are common in the early portion of any programming course, which is also the period when teachers have the most difficult job in keeping all the students in their zones of proximal development. This tool took the form of a Classroom Console, which was presented in a focus group format to K-12 teachers and university professors in the United States and beyond, who validated that the tool would be useful in their own teaching practice, and provided feedback to inform its development into a fully realized application.
 
+The particle analysis method can be applied to other languages, and is particularly well-suited to blocks languages. This method can be used to inform future real-time analysis tools that aim to help classroom orchestration through real-time feedback of student progress within a the lab session.
 
-\section{Rationale}
+%\section{Rationale}
