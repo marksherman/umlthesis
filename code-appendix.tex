@@ -10,7 +10,11 @@ Interesting source code for the data capture, collection, and analysis systems u
 \section{Field Change Accumulator}
 \label{src:reduceFieldChanges}
 
-\begin{listing}[]
+The listing below % \ref{src:lst:field-change} 
+presents the code used for the text field change accumulator described in Section \ref{sec:text-acc}. This algorithm operated on a single project, represented as a list of changes in historical order. It identified when the a text field was modified multiple times in rapid succession and reduced that series of changes to its final state.
+
+This algorithm was part of the post-hoc analysis tools, and was not part of the real-time assessment algorithm.
+% \begin{listing}[]
 \begin{minted}{python}
 def reduceFieldChanges(changes):
     """Reduces char-by-char field changes into a single change.
@@ -59,70 +63,13 @@ def reduceFieldChanges(changes):
     for c in changesToDelete:
         changes.remove(c)
 \end{minted}
-\caption{The Field Change Accumulator}
+% \caption{The Field Change Accumulator}
 \label{src:lst:field-change}
-\end{listing}
-
-Listing \ref{src:lst:field-change} presents the code used for the text field change accumulator described in Section \ref{sec:text-acc}. This algorithm operated on a single project, represented as a list of changes in historical order. It identified when the a text field was modified multiple times in rapid succession and reduced that series of changes to its final state.
-
-This algorithm was part of the post-hoc analysis tools, and was not part of the real-time assessment algorithm.
+% \end{listing}
 
 \section{Particle Test Definitions for Activities}
 \label{app:particle_definitions}
 The solution particle definitions for the Debugging Activity and the Temperature Activity are given below. The tests currently available for use are listed in Table \ref{tab:particle-tests}. 
-
-The Debugging Activity definition (Listing \ref{lst:debugging_test_definition}) is broken into three blocks, each of which represents a separate subgoal. If all were executed at the same time, the maximum score would be 16, but the solutions actually supersede previous ones, so a perfect solution is actually a score of 14. A score of 16 demonstrates a current weakness with the analysis, that a solution can still be over-represented, artificially inflating the score by a small amount.
-
-The Temperature Activity definition (Listing \ref{lst:temperature_test_definition}) only has one goal, so the maximum score is 27. This activity also has gift code, as indicated, so the starting score is 7. 
-
-\begin{listing}[]
-\begin{minted}{python}
-def score_debugging(snapshot):
-    e = snapshot['etree']
-    p = snapshot['parentmap']
-    score = 0
-
-    score += run_2(find_text_StopShaking, in_a_textToSpeech_speak, e, p)
-    score += run_2(find_TextToSpeech_Speak, in_a_accel_shaking, e, p)
-    score += run_1(find_event_Accel_Shaking, e)
-
-    score += run_2(find_text_HowAreYou, in_a_textToSpeech_speak, e, p)
-    score += run_2(find_TextBox_getText, in_a_textToSpeech_speak, e, p)
-    score += run_2(find_TextToSpeech_Speak, in_a_button_click, e, p)
-
-    score += run_2(find_TextBox_getText, in_a_set_label_text, e, p)
-    score += run_2(find_Label_setText, in_a_button_click, e, p)
-    score += run_1(find_event_Button_Click, e)
-    return score
-\end{minted}
-\caption{Debugging Activity Solution Particle Definitions}
-\label{lst:debugging_test_definition}
-\end{listing}
-
-\begin{listing}[]
-\begin{minted}{python}
-e = snapshot['etree']
-    p = snapshot['parentmap']
-    score = 0
-
-    score += run_3(find_number_value(5), in_a_division, in_a_division_position_A, e, p)
-    score += run_3(find_number_value(9), in_a_division, in_a_division_position_B, e, p)
-    score += run_3(find_number_value(32), in_a_subtraction, in_a_subtraction_position_B, e, p)
-    score += run_3(find_var_getter, in_a_subtraction, in_a_subtraction_position_A, e, p)
-    score += run_2(find_division, in_a_multiplication, e, p)
-    score += run_2(find_subtraction, in_a_multiplication, e, p)
-    score += run_2(find_multiplication, in_a_proc_def_ret, e, p)
-    score += run_1(find_proc_def_with_arg, e)
-    # beyond here is the off-screen gift code
-    score += run_2(find_TextBox_getText, in_a_proc_call_ret, e, p)
-    score += run_2(find_proc_call_with_arg, in_a_set_label_text, e, p)
-    score += run_2(find_Label_setText, in_a_button_click, e, p)
-    score += run_1(find_event_Button_Click, e)
-    return score
-\end{minted}
-\caption{Temperature Activity Solution Particle Definitions}
-\label{lst:temperature_test_definition}
-\end{listing}
 
 \begin{table}
 \begin{centering}
@@ -144,133 +91,192 @@ e = snapshot['etree']
         find TextToSpeech Speak             &   \\
 
     \end{tabular}
-    \caption[Particle solution tests]{Tests that currently make up the solution particle definitions.}
+    % \caption[Particle solution tests]{Tests that currently make up the solution particle definitions.}
     \label{tab:particle-tests}
 \end{centering}
 \end{table}
 
+\subsection{Debugging Activity Particle Definition}
+The Debugging Activity definition below %(Listing \ref{lst:debugging_test_definition}) 
+is broken into three blocks, each of which represents a separate subgoal. The blocks are lines 6-8, 10-12, and 14-16. If all were executed at the same time, the maximum score would be 16, but the solutions actually supersede previous ones, so a perfect solution is actually a score of 14. A score of 16 demonstrates a current weakness with the analysis, that a solution can still be over-represented, artificially inflating the score by a small amount.
 
-\section{Feature Extraction Tests}
-\label{src:feature-extraction-tests}
-
-Below are the code listings for the feature extraction module, as discussed in Section \ref{sec:feature-extraction}, displayed as Listings \ref{src:lst:add-delete}--\ref{src:lst:properties-modified}. All of these tests took representations of two adjacent snapshots as arguments. Data types representing snapshots could be any of the following: ``root,'' which was the tree structures of the blocks itself; ``IDmap,'' a structure mapping ID numbers to blocks; or ``parentMap,'' a structure mapping block ID numbers to their parent blocks. There were also helper functions to access and manipulate these structures, whose definitions are unnecessary to understand their function, and were not included here.
-
-All of these tests returned an array containing references to the blocks for which the test was true. Returning an empty array indicated that no blocks were found, and that specific change type did not occur between the two given snapshots.
-
-Helper functions have been included here where they were necessary to fully understand the operation of the test. These tests were written in python and made significant use of list comprehensions \citep{oliphant2007python}.
-
-\begin{listing}[]
+% \begin{listing}[]
 \begin{minted}{python}
-def checkForDeletedAddedBlocks(rootA, rootB):
-    """Returns lists: deleted and added blocks from A to B."""
-    iterA = rootA.iter(BLOCK)
-    iterB = rootB.iter(BLOCK)
-    setA = frozenset([el.get('id') for el in iterA])
-    setB = frozenset([el.get('id') for el in iterB])
-    deleted = setA.difference(setB)
-    added = setB.difference(setA)
-    return list(deleted), list(added)
-\end{minted}
-\caption{Test for Added and/or Deleted Blocks}
-\label{src:lst:add-delete}
-\end{listing}
+def score_debugging(snapshot):
+    e = snapshot['etree']
+    p = snapshot['parentmap']
+    score = 0
 
-\begin{listing}[]
+    score += run_2(find_text_StopShaking, in_a_textToSpeech_speak, e, p)
+    score += run_2(find_TextToSpeech_Speak, in_a_accel_shaking, e, p)
+    score += run_1(find_event_Accel_Shaking, e)
+
+    score += run_2(find_text_HowAreYou, in_a_textToSpeech_speak, e, p)
+    score += run_2(find_TextBox_getText, in_a_textToSpeech_speak, e, p)
+    score += run_2(find_TextToSpeech_Speak, in_a_button_click, e, p)
+
+    score += run_2(find_TextBox_getText, in_a_set_label_text, e, p)
+    score += run_2(find_Label_setText, in_a_button_click, e, p)
+    score += run_1(find_event_Button_Click, e)
+    return score
+\end{minted}
+% \caption{Debugging Activity Solution Particle Definitions}
+\label{lst:debugging_test_definition}
+% \end{listing}
+
+\subsection{Temperature Activity Particle Definition}
+The Temperature Activity definition, below, %(Listing \ref{lst:temperature_test_definition}) 
+only has one goal, with a maximum scores of 27. This activity also has gift code, as indicated, so the starting score is 7. 
+
+% \begin{listing}[]
 \begin{minted}{python}
-def checkForMovedBlocks(IDmapA, IDmapB):
-    """Returns list: blocks that moved in space or context from A to B."""
-    # only check blocks that exist in both time steps (set intersection)
-    blockIDs = commonKeys(IDmapA, IDmapB)
-    return [i for i in blockIDs if didThisBlockMoveinSpace(IDmapA[i], IDmapB[i])]
+def score_temperature(snapshot):
+    e = snapshot['etree']
+    p = snapshot['parentmap']
+    score = 0
 
-# Returns
-#   True: block is top-level and moved on workspace
-#   False: block was moved in or out of top-level (in/out of being nested)
-#   False: block is top level and coordinates did not change
-#   False: block is nested and stayed as such (though parent may have moved)
-def didThisBlockMoveinSpace(blockA, blockB):
-    """Checks the same block element at two different times for motion in space"""
-    sameBlockCheck(blockA, blockB)
-    # isTop* is True if location coordinates are in that block
-    isTopA = isBlockTopLevel(blockA)
-    isTopB = isBlockTopLevel(blockB)
-
-    if isTopA and isTopB:
-        # both are top-level
-        return blockA.get('x') != blockB.get('x') or blockA.get('y') != blockB.get('y')
-    else:
-        # block either is not top level or changed contexts
-        return False
+    score += run_3(find_number_value(5), in_a_division, in_a_division_position_A, e, p)
+    score += run_3(find_number_value(9), in_a_division, in_a_division_position_B, e, p)
+    score += run_3(find_number_value(32), in_a_subtraction, in_a_subtraction_position_B, e, p)
+    score += run_3(find_var_getter, in_a_subtraction, in_a_subtraction_position_A, e, p)
+    score += run_2(find_division, in_a_multiplication, e, p)
+    score += run_2(find_subtraction, in_a_multiplication, e, p)
+    score += run_2(find_multiplication, in_a_proc_def_ret, e, p)
+    score += run_1(find_proc_def_with_arg, e)
+    # beyond here is the off-screen gift code
+    score += run_2(find_TextBox_getText, in_a_proc_call_ret, e, p)
+    score += run_2(find_proc_call_with_arg, in_a_set_label_text, e, p)
+    score += run_2(find_Label_setText, in_a_button_click, e, p)
+    score += run_1(find_event_Button_Click, e)
+    return score
 \end{minted}
-\caption{Test for Moved Blocks (on workspace)}
-\end{listing}
+% \caption{Temperature Activity Solution Particle Definitions}
+\label{lst:temperature_test_definition}
+% \end{listing}
 
-\begin{listing}[]
-\begin{minted}{python}
-def checkForContextMove(IDmapA, IDmapB, parentMapA, parentMapB):
-    """Returns list: blocks that moved in context, having a new parent, from A to B"""
-    blockIDs = commonKeys(IDmapA, IDmapB)
-    # for each ID, get that block, and compare parentmaps
-    return [i for i in blockIDs if
-            findParentBlockByID(i, parentMapA, IDmapA).get('id') !=
-            findParentBlockByID(i, parentMapB, IDmapB).get('id')]
-\end{minted}
-\caption{Test for Blocks Moving in Context}
-\end{listing}
 
-\begin{listing}[]
-\begin{minted}{python}
-def checkForFieldChanges(IDmapA, IDmapB):
-    """Returns list: blocks whose field(s) changed from A to B, common to A&B"""
-    blockIDs = commonKeys(IDmapA, IDmapB)
-    return [i for i in blockIDs if didThisBlocksFieldsChange(IDmapA[i], IDmapB[i])]
+% \section{Feature Extraction Tests}
+% \label{src:feature-extraction-tests}
+% CURRENTLY DISABLED BUT STILL VALID IF YOU WANT THEM - ONLY REFERENCED ONCE IN CHAPTER 4 (line 96)
 
-def didThisBlocksFieldsChange(blockA, blockB):
-    """Detect text field changes, whether strings or variable names, etc"""
-    fieldsA = blockA.findall(ns + 'field')
-    fieldsB = blockB.findall(ns + 'field')
-    for fA, fB in zip(fieldsA, fieldsB):
-        if fA.text != fB.text:
-            return True
-    return False
-\end{minted}
-\caption{Test for Text Field Changes}
-\end{listing}
+% Below are the code listings for the feature extraction module, as discussed in Section \ref{sec:feature-extraction}, displayed as Listings \ref{src:lst:add-delete}--\ref{src:lst:properties-modified}. All of these tests took representations of two adjacent snapshots as arguments. Data types representing snapshots could be any of the following: ``root,'' which was the tree structures of the blocks itself; ``IDmap,'' a structure mapping ID numbers to blocks; or ``parentMap,'' a structure mapping block ID numbers to their parent blocks. There were also helper functions to access and manipulate these structures, whose definitions are unnecessary to understand their function, and were not included here.
 
-\begin{listing}[]
-\begin{minted}{python}
-def checkForChangedBlocks(IDmapA, IDmapB):
-    """Returns list: blocks that changed (not moved) from A to B, common to A&B"""
-    blockIDs = commonKeys(IDmapA, IDmapB)
-    return [i for i in blockIDs if didThisBlockChange(IDmapA[i], IDmapB[i])]
+% All of these tests returned an array containing references to the blocks for which the test was true. Returning an empty array indicated that no blocks were found, and that specific change type did not occur between the two given snapshots.
 
-def didThisBlockChange(blockA, blockB):
-    """True: blockA/B and their child Elements DIFFER, ignoring fields."""
-    sameBlockCheck(blockA, blockB)
+% Helper functions have been included here where they were necessary to fully understand the operation of the test. These tests were written in python and made significant use of list comprehensions \citep{oliphant2007python}.
 
-    # ElementEqual ignores x/y by default
-    if not ElementEqual(blockA, blockB):
-        return True
+% % \begin{listing}[]
+% \begin{minted}{python}
+% def checkForDeletedAddedBlocks(rootA, rootB):
+%     """Returns lists: deleted and added blocks from A to B."""
+%     iterA = rootA.iter(BLOCK)
+%     iterB = rootB.iter(BLOCK)
+%     setA = frozenset([el.get('id') for el in iterA])
+%     setB = frozenset([el.get('id') for el in iterB])
+%     deleted = setA.difference(setB)
+%     added = setB.difference(setA)
+%     return list(deleted), list(added)
+% \end{minted}
+% % \caption{Test for Added and/or Deleted Blocks}
+% \label{src:lst:add-delete}
+% % \end{listing}
 
-    # This assumes blocks cannot be direct descendants of other blocks-
-    #   which seems to be true as blocks must be plugged into a value socket.
-    #   As a result, no filtering for non-block children is performed
-    childrenA = [e for e in blockA.findall('*') if e.tag != ns + 'field']
-    childrenB = [e for e in blockB.findall('*') if e.tag != ns + 'field']
+% % \begin{listing}[]
+% \begin{minted}{python}
+% def checkForMovedBlocks(IDmapA, IDmapB):
+%     """Returns list: blocks that moved in space or context from A to B."""
+%     # only check blocks that exist in both time steps (set intersection)
+%     blockIDs = commonKeys(IDmapA, IDmapB)
+%     return [i for i in blockIDs if didThisBlockMoveinSpace(IDmapA[i], IDmapB[i])]
 
-    if len(childrenA) != len(childrenB):
-        return True
+% # Returns
+% #   True: block is top-level and moved on workspace
+% #   False: block was moved in or out of top-level (in/out of being nested)
+% #   False: block is top level and coordinates did not change
+% #   False: block is nested and stayed as such (though parent may have moved)
+% def didThisBlockMoveinSpace(blockA, blockB):
+%     """Checks the same block element at two different times for motion in space"""
+%     sameBlockCheck(blockA, blockB)
+%     # isTop* is True if location coordinates are in that block
+%     isTopA = isBlockTopLevel(blockA)
+%     isTopB = isBlockTopLevel(blockB)
 
-    for childA, childB in zip(childrenA, childrenB):
-        if not ElementEqual(childA, childB):
-            return True
+%     if isTopA and isTopB:
+%         # both are top-level
+%         return blockA.get('x') != blockB.get('x') or blockA.get('y') != blockB.get('y')
+%     else:
+%         # block either is not top level or changed contexts
+%         return False
+% \end{minted}
+% % \caption{Test for Moved Blocks (on workspace)}
+% % \end{listing}
 
-    # passed all tests without finding a change, so it must not have changed.
-    return False
-\end{minted}
-\caption{Test for Properties Modified}
-\label{src:lst:properties-modified}
-\end{listing}
+% % \begin{listing}[]
+% \begin{minted}{python}
+% def checkForContextMove(IDmapA, IDmapB, parentMapA, parentMapB):
+%     """Returns list: blocks that moved in context, having a new parent, from A to B"""
+%     blockIDs = commonKeys(IDmapA, IDmapB)
+%     # for each ID, get that block, and compare parentmaps
+%     return [i for i in blockIDs if
+%             findParentBlockByID(i, parentMapA, IDmapA).get('id') !=
+%             findParentBlockByID(i, parentMapB, IDmapB).get('id')]
+% \end{minted}
+% % \caption{Test for Blocks Moving in Context}
+% % \end{listing}
+
+% % \begin{listing}[]
+% \begin{minted}{python}
+% def checkForFieldChanges(IDmapA, IDmapB):
+%     """Returns list: blocks whose field(s) changed from A to B, common to A&B"""
+%     blockIDs = commonKeys(IDmapA, IDmapB)
+%     return [i for i in blockIDs if didThisBlocksFieldsChange(IDmapA[i], IDmapB[i])]
+
+% def didThisBlocksFieldsChange(blockA, blockB):
+%     """Detect text field changes, whether strings or variable names, etc"""
+%     fieldsA = blockA.findall(ns + 'field')
+%     fieldsB = blockB.findall(ns + 'field')
+%     for fA, fB in zip(fieldsA, fieldsB):
+%         if fA.text != fB.text:
+%             return True
+%     return False
+% \end{minted}
+% % \caption{Test for Text Field Changes}
+% % \end{listing}
+
+% % \begin{listing}[]
+% \begin{minted}{python}
+% def checkForChangedBlocks(IDmapA, IDmapB):
+%     """Returns list: blocks that changed (not moved) from A to B, common to A&B"""
+%     blockIDs = commonKeys(IDmapA, IDmapB)
+%     return [i for i in blockIDs if didThisBlockChange(IDmapA[i], IDmapB[i])]
+
+% def didThisBlockChange(blockA, blockB):
+%     """True: blockA/B and their child Elements DIFFER, ignoring fields."""
+%     sameBlockCheck(blockA, blockB)
+
+%     # ElementEqual ignores x/y by default
+%     if not ElementEqual(blockA, blockB):
+%         return True
+
+%     # This assumes blocks cannot be direct descendants of other blocks-
+%     #   which seems to be true as blocks must be plugged into a value socket.
+%     #   As a result, no filtering for non-block children is performed
+%     childrenA = [e for e in blockA.findall('*') if e.tag != ns + 'field']
+%     childrenB = [e for e in blockB.findall('*') if e.tag != ns + 'field']
+
+%     if len(childrenA) != len(childrenB):
+%         return True
+
+%     for childA, childB in zip(childrenA, childrenB):
+%         if not ElementEqual(childA, childB):
+%             return True
+
+%     # passed all tests without finding a change, so it must not have changed.
+%     return False
+% \end{minted}
+% % \caption{Test for Properties Modified}
+% \label{src:lst:properties-modified}
+% % \end{listing}
 
 
 
@@ -315,6 +321,7 @@ def didThisBlockChange(blockA, blockB):
 
 % \subsection{gc.sh}
 % \label{src:gc.sh}
+
 % The additive git method used by this service creates inefficiencies on the host file system that consumes space and inodes at a high rate. This script `garbage collects' the database, repacking it efficiently, and should be run occasionally while the system is in use. This file is included here as a warning to anyone in the future who wants to use git as a database.
 % \inputminted{bash}{src/snapshot-service/gc.sh}
 
