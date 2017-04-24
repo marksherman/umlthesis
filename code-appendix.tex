@@ -1,4 +1,5 @@
-\chapter{Code Listing Excerpts} \label{appendix:listings}
+\chapter{Code Listing Excerpts} 
+\label{appendix:listings}
 
 Interesting source code for the data capture, collection, and analysis systems used in this project are listed here. 
 
@@ -69,7 +70,7 @@ def reduceFieldChanges(changes):
 
 \section{Particle Test Definitions for Activities}
 \label{app:particle_definitions}
-The solution particle definitions for the Debugging Activity and the Temperature Activity are given below. The tests currently available for use are listed in Table \ref{tab:particle-tests}. 
+The solution particle definitions for the Debugging Activity and the Temperature Activity are given below. The tests currently available for use are listed in Table \ref{tab:particle-tests-available}. 
 
 \begin{table}
 \begin{centering}
@@ -91,8 +92,8 @@ The solution particle definitions for the Debugging Activity and the Temperature
         find TextToSpeech Speak             &   \\
 
     \end{tabular}
-    % \caption[Particle solution tests]{Tests that currently make up the solution particle definitions.}
-    \label{tab:particle-tests}
+    \caption[Particle solution tests]{Tests that currently make up the solution particle definitions.}
+    \label{tab:particle-tests-available}
 \end{centering}
 \end{table}
 
@@ -153,6 +154,66 @@ def score_temperature(snapshot):
 % \caption{Temperature Activity Solution Particle Definitions}
 \label{lst:temperature_test_definition}
 % \end{listing}
+
+
+\section{The Flailing Detector}
+\label{src:flailing-detector-algorithm}
+Below is the current implementation of the flailing detector algorithm, as described in Section \ref{sec:the-flailing-detector}. This algorithm takes as input snapshots expressed as particle scores and returns, for each given snapshot, an assessment of whether or not flailing was occurring at that point. This implementation is written in python, and takes an entire project history (post-hoc) using the \emph{detectFlailing} function. 
+
+\begin{minted}{python}
+"""
+    Detect flailing patterns in Particle Score data.
+    Marks each change as flailing based on a time window preceding it.
+    Does not care about overall trajectory of the project- 
+    only if flailing is happening at a point.
+    
+    Input data should be of the form "particle scores" (fragment scores) 
+    in the following format for each project:
+     {  'scores': [6, 10, 11],
+        'times': [0, 142, 249],
+        'username': 'AcapulcoDeer'}
+"""
+from numpy import mean
+
+FLAIL = "F"
+NOFLAIL = "n"
+UNKNOWN = "u"
+
+
+def onePointFlail(scores, changeWindow, index):
+    """Calculate if a single change is flailing based on the window leading up to it."""
+    windowStartIndex = index - changeWindow
+    if windowStartIndex < 0:
+        return UNKNOWN
+    m = mean(scores[windowStartIndex:index])
+    if scores[index] > m:
+        return NOFLAIL
+    return FLAIL
+
+
+def simpleFlailScan(project, changeWindow):
+    """changeWindow is the number of changes BEFORE the current change to 
+        average and compare with."""
+    scores = project['scores']           # change score list
+    outList = [UNKNOWN] * len(scores)    # results list
+    for i in range(len(scores)):
+        outList[i] = onePointFlail(scores, changeWindow, i)
+    return outList
+
+
+def detectFlailing(project, project_type, changeWindow):
+    """wrapper for simpleFlailScan that creates a nice object per project 
+        suitable for exporting to CSV."""
+    # {'type', 'username', 'flailing', 'times'}
+    if (project_type != 'd') and (project_type != 't'):
+        raise Exception("Project type not specified correctly")
+    f = simpleFlailScan(project, changeWindow)
+    return {'type': project_type, 
+            'username': project['username'], 
+            'times': project['times'], 
+            'flailing': f}
+
+\end{minted}
 
 
 % \section{Feature Extraction Tests}

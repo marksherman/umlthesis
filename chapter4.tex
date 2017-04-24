@@ -92,7 +92,10 @@ The total percentage of potentially erroneous snapshots in the debugging activit
 \label{tab:features-extracted}
 \end{table}
 
-The features extracted by this module were listed and described above in Figure \ref{tab:features-extracted}. This section outlines the specific definitions that constitute the feature tests. All of these tests operated on snapshots of the same project that were adjacent in time. They detected differences between the two, often utilizing the meta data maps described above in Section \ref{sec:data-processing}. Source code for these algorithms are presented in Appendix \ref{src:feature-extraction-tests}.
+The features extracted by this module were listed and described above. % in Figure \ref{tab:features-extracted}. 
+This section outlines the specific definitions that constitute the feature tests. All of these tests operated on snapshots of the same project that were adjacent in time. 
+They detected differences between the two, often utilizing the meta data maps described above in Section \ref{sec:data-processing}. 
+% Source code for these algorithms are presented in Appendix \ref{src:feature-extraction-tests}.
 
 The test for \emph{Blocks Added} and \emph{Blocks Deleted} were the same routine, which assembled a list of blocks by their ID numbers for both snapshots and compared differences between those lists using set arithmetic. 
 
@@ -120,6 +123,7 @@ To combat this over-representation, sequences of character-wise change events ne
 
 
 \section{Manual Assessment}
+\label{sec:manual-assessment}
 To get a feel for the data collected, all student projects were inspected by researchers using the snapshot playback mechanism described in Section \ref{sec:playback}. Looking at the students' blocks and their changes over time, researches took note of projects that demonstrated flailing behavior and projects with strong efficacy towards solving the problem. The remaining projects were considered typical. This analysis did not utilize a rubric, nor was intended to be absolute nor complete, as it relied entirely on judgment by the researcher. It did serve to develop an understanding of common patterns, which will be discussed in Section \ref{sec:patterns}. This assessment was necessary to develop the in-depth analysis techniques and visualizations described in sections below. The flailing behaviors were characteristically repetitive, where blocks would move in ways that did not change or improve the state of the app. The high-efficacy behaviors were easier to characterize, as the solution became closer to correct.
 
 In detail, manual assessment rated projects efficacy ``ok,'' ``good,'' ``great,'' or none, and rated repetitive, and/or nonproductive behavior as ``flailing,'' ``extreme flailing,'' ``disengaged,'' ``lacking traction,'' or none. For analysis of these ratings, they were grouped together, where ``good and great'' were a single category, as were all forms of flailing, disengagement, or low traction. All other codes and projects were considered ``typical.'' The counts of these code groups are shown in Table \ref{tab:manual-percentages}.
@@ -209,7 +213,9 @@ In its current implementation, up to two additional position tests could be run 
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{diagrams/particle-run3}
-  \caption[Particle analysis test running algorithm]{Model of the algorithm for running particle analysis tests. This shows the three-test variant. There were also one- and two-test variants, that worked similarly. Test 1 must always be a ``find'' test that looks for individual blocks. Tests 2 and 3 must be ``in a'' tests, which investigate the parent blocks to assess nesting location. Available tests are listed in Table \ref{tab:particle-tests} in Appendix \ref{app:particle_definitions}.}
+  \caption[Particle analysis test running algorithm]{Model of the algorithm for running particle analysis tests. This shows the three-test variant. There were also one- and two-test variants, that worked similarly. Test 1 must always be a ``find'' test that looks for individual blocks. Tests 2 and 3 must be ``in a'' tests, which investigate the parent blocks to assess nesting location. 
+  %Available tests are listed in Table \ref{tab:particle-tests} in Appendix \ref{app:particle_definitions}.
+  }
   \label{fig:particle-run3}
 \end{figure}
 
@@ -229,6 +235,339 @@ The test definitions used in this study are presented in Appendix \ref{app:parti
 The particle analysis method relied on a known solution, and provided a metric of how close to that solution a student was at any time. This was conceptually similar to \citet{le2007using} and \citet{mitrovic2003intelligent}, where both used a pre-made definition of the solution for a particular problem. The particle analysis method also shares a core weakness with those systems, where the solution definitions must be known and written in advance. Adding to the cannon of activities that can utilize the system depends on writing new solution definitions, which may be difficult for in-service teachers who already suffer from limited prep time. Perhaps content authors would be responsible for also including suitable solution definitions, but a fully automated path would clearly be better.
 
 The current implementation of particle analysis allows for a class of solution over-representation, where students can create invalid code that generates a score \emph{slightly higher} than that of the equivalent working code. This bug stems from a language feature of App Inventor that the particle implementation does not yet handle. This class of bug, however, should be directly addressed in the conceptual design of the particle analysis method.
+
+
+\section{Patterns Observed in Particle Scores}
+\label{sec:patterns}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{images/stories/scores-debug-UfaDogfish}
+	\caption[Smooth, Rapid Progress of Particle Scores]{Smooth, rapid progress of particle scores, as shown by the student UfaDogfish in the Debugging Activity.}
+	\label{fig:smooth_chart}
+\end{figure}
+Across both activities, three general patterns of particle score progression emerged. The first, called ``smooth'' was a rapid acceleration to the conclusion, where nearly every change improved the score. The ``smooth'' category looks like as if the student already knew the answer, and implemented directly and efficiently. This pattern did allow for slight variation, and smooth-coded projects were not always monotonically increasing, but they were always rapid rises with few changes before the beginning of the upward inflection. An example is shown in Figure \ref{fig:smooth_chart}. Less than a quarter (22\%) of Debugging Activity projects showed this pattern, and just over a quarter (27\%) of the Temperature activity did.
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{\textwidth}
+		\includegraphics[width=\textwidth]{images/stories/scores-temp-HangzhouTurkey}
+		\caption{HangzhouTurkey in the Temperature Activity}
+	\end{subfigure}\hfill
+	\begin{subfigure}{\textwidth}
+		\includegraphics[width=\textwidth]{images/stories/scores-debug-LondonDragonfly}
+		\caption{LondonDragonfly in the Debugging Activity}
+	\end{subfigure}\hfill
+	\caption[``Fits and Starts,'' Typical Progress of Particle Scores]{Two examples of ``Fits and starts,'' demonstrating the typical progress of particle scores.}
+	\label{fig:fits_starts_chart}
+\end{figure}
+The second pattern category was called ``fits and starts'' and represents the most typical trajectory, where the score has periods of progress, non-progress, and sometimes regression, but overall trends upwards and reaches a reasonably successful final state. This was the most broad category, as it was also the one to catch any pattern that was not clearly smooth (above) or flailing (below). Two examples are provided in Figure \ref{fig:fits_starts_chart}, to show the core pattern and some of the allowable variation around it. The Debugging Activity and Temperature Activity projects fell into this category at rates of 49\% and 60\%, respectively. 
+
+
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{images/stories/scores-debug-RomePelican}
+	\caption[Flailing Pattern, a Lack of Progress of Particle Scores]{Flailing pattern is indicated by a lack of overall progress of particle scores, as shown by the student RomePelican in the Debugging Activity.}
+	\label{fig:flailing_chart}
+\end{figure}
+The third pattern category was ``flailing.'' While the ``fits and starts'' category did allow some flailing behavior, whether score oscillation or non-progress changes, that category always had a generally upwards trend, and resulted in a solution. This category of flailing was reserved for the projects that demonstrated little progress in total, and were entirely flailing behaviors. This pattern is shown in Figure \ref{fig:flailing_chart}. 
+
+A proportion (30\%) of the Debugging Activity projects fell into this category, but, surprisingly, only 13\% of Temperature Activity projects did. We had hypothesized that where the Temperature Activity lacked proper scaffolding there would be more flailing behavior, but the largest category was by far ``fits and starts.'' We can posit that the low rate of apparent flailing at this scale may be due to the aggressive availability of helpers for intervention. The problem may have been sufficiently hard that many students did not even try until they got help from someone. This hypothesis is supported by the wide variation of inflection point, the time where the scores began to increase. Some started right away, while others started nearly at the end of the session period, with many in between. This time translation may be an artifact of the teaching assistants working their way through the classroom, eventually giving everyone the intervention necessary for them to understand and be effective within the problem.
+
+These categories, and the students in each for both activities, is shown in Tables \ref{tab:pattern_names_debug} and \ref{tab:pattern_names_temp}.
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{p{\textwidth}}
+	\hline \hline
+	``Smooth'' (23, 22\%)\\ \hline
+		CampoPrairie		
+		CiudadWeasel		
+		CuiabáGoldfish		
+		DetroitShark		
+		DortmundBat			
+		GorakhpurYak		
+		GuayaquilRook		
+		HamamatsuFrog		
+		JohorGuineaPig		
+		KermanshahCockroach1
+		LagosRook			
+		LibrevilleCrow		
+		MendozaAnteater		
+		ParisAlligator1		
+		PeshawarGnat		
+		RangoonBear			
+		SantaGrasshopper	
+		SeoulOkapi			
+		TrujilloLouse		
+		TurinFly			
+		UfaDogfish			
+		VisakhapatnamSheep	
+		ZaporizhzhyaFalcon	\\ \hline \hline
+
+	``Fits and Starts'' (51, 49\%)\\ \hline
+		AcapulcoDeer		
+		CairoCat			
+		ChelyabinskSpider	
+		ConakryBear		
+		CórdobaSalmon	
+		DatongPigeon		
+		DenverDolphin		
+		DhakaClam			
+		DhakaEchidna		
+		DublinBee			
+		FukuokaGoldfinch	
+		GuayaquilRook1	
+		HangzhouTurkey	
+		HangzhouTurkey1	
+		HefeiKudu			
+		HermosilloSandpiper
+		HubliMarten		
+		IndoreDogfish		
+		IndoreWallaby		
+		JinzhouGorilla	
+		KaohsiungViper	
+		KitakyushuSeal	
+		KobeCaterpillar	
+		KobeSalamander		
+		KuchingCheetah		
+		LahoreLapwing		
+		LondonDragonfly		
+		LusakaOx			
+		MoreliaOx			
+		MultanFrog			
+		MunichTermite		
+		NanchangOwl			
+		OnitshaWombat
+		PermHerring
+		PhoenixWeasel
+		PointeCheetah
+		PueblaVulture
+		SeoulSheep
+		ShahChinchilla
+		SholapurSandpiper
+		SurabayaChimpanzee
+		TaichungRook
+		TaizhouSwallow
+		TbilisiKudu
+		TijuanaOctopus
+		VladivostokCurlew
+		WarangalStinkbug
+		WroclawRat
+		XianAntelope
+		YanchengGoose
+		ZhangjiakouSardine		\\ \hline \hline
+	``Flailing'' (31, 30\%)\\ \hline
+		CalgaryHyena
+		ChongjuOwl
+		HachiojiPeafowl
+		HamadanMouse
+		HaoraDragonfly
+		KadunaAlpaca
+		KermanshahCockroach
+		KhabarovskBoar
+		MakhachkalaWasp
+		MultanVulture
+		NagpurAlpaca
+		NiyalaAlligator
+		OkayamaMarten
+		OklahomaGiant
+		ParisAlligator
+		PhiladelphiaWoodpecker
+		QuerétaroMule
+		QuitoShark
+		RomePelican
+		SapporoWoodcock
+		SarajevoDuck
+		SurabayaTermite
+		SuwonGoldfish
+		TaiyuanDinosaur
+		TianjinAlbatross
+		TripoliSandpiper
+		ValenciaFox
+		VijayawadaOtter
+		WarsawCrocodile
+		XuzhouLoris
+		YaroslavlCattle	\\ \hline
+
+	\end{tabular}
+	\caption[Categories of Progress Patterns for the Debugging Activity and the Students in them]{Categories of Progress Patterns for the Debugging Activity and the Students in them.}
+	\label{tab:pattern_names_debug}
+\end{centering}
+\end{table}
+
+\begin{table}
+\begin{centering}
+	\begin{tabular}{p{\textwidth}}
+	\hline \hline
+	``Smooth'' (8, 27\%)\\ \hline
+		DortmundBat
+		HubliMarten
+		KermanshahCockroach
+		MendozaAnteater
+		RangoonBear
+		TbilisiKudu
+		UfaDogfish
+		ZaporizhzhyaFalcon
+		\\ \hline \hline
+	``Fits and Starts'' (18, 60\%)\\ \hline
+		DatongPigeon
+		FukuokaGoldfinch
+		HangzhouTurkey
+		KobeSalamander
+		LondonDragonfly
+		PhoenixWeasel
+		PointeCheetah
+		PueblaVulture
+		QuerétaroMule
+		ShiheziBat
+		SurabayaChimpanzee
+		SurabayaTermite1
+		TaiyuanDinosaur
+		TaizhouSwallow
+		VeracruzDotterel
+		VisakhapatnamSheep1
+		VladivostokCurlew
+		WroclawRat
+		\\ \hline \hline
+	``Flailing'' (4, 13\%)\\ \hline
+		Rostov-na-DonuLapwing
+		Rostov-na-DonuLapwing1
+		SurabayaTermite
+		VaranasiOstrich
+		\\ \hline
+
+	\end{tabular}
+	\caption[Categories of Progress Patterns for the Temperature Activity and the Students in them]{Categories of Progress Patterns for the Temperature Activity and the Students in them.}
+	\label{tab:pattern_names_temp}
+\end{centering}
+\end{table}
+
+
+
+\section{The Flailing Detector Algorithm}
+\label{sec:the-flailing-detector}
+The Flailing Detector Algorithm accepted as input a series of changes represented as particle scores, and assessed each change as flailing or non-flailing based on the scores of the immediately preceding changes. This algorithm is the literal realization of the thesis question specified in Section \ref{sec:problem-statement}. 
+
+The algorithm also takes a parameter as input to specify the number of predecessor changes to examine when assessing for flailing. This parameter was called the \emph{changeWindow}, and was completely independent of time. The changeWindow parameter affected how many changes would be considered, completely irrespective to the time period over which those changes took place. This disregard for time was intentional to create the simplest realization of the Flailing Detector.
+
+For each change, the previous \emph{changeWindow} scores were averaged. If the current change score was greater than the average of its immediate predecessors, that change was marked as non-flailing, otherwise it was marked as flailing. The flailing detector algorithm can be stated as: 
+
+\[F(S_n) = S_n \leq M(S_{n-1} \dots S_{n-w})\]
+
+where $F(s)$ is the Flailing function that returns true to indicate flailing, $S$ is the particle score of a snapshot, $M$ is the arithmetic mean function, and $w$ is the \emph{changeWindow} parameter. 
+
+This definition only works when $n > w$, otherwise $F$ returns false, for non-flailing. This caveat accounts for the startup time necessary to fill the change window. There is no way to know if a student is flailing on the first snapshot alone, and likely not the second. Only once a sufficient number of snapshots are collected ($n>w$) can a flailing assessment be made.
+
+Full source code is listed in Appendix \ref{src:flailing-detector-algorithm}.
+
+\subsection{Argument for Real-time}
+The flailing detector algorithm is of time complexity $O(n)$. In detail, it currently is built out of three functions: a one-point calculator, a scanner for an entire project, and an entry point that is a wrapper around the scanner. The wrapper does nothing but sanity check the project type and reformat the data structure, which are both constant-time operations. It then calls the scanner, which uses a for-loop over the length of the project ($O(n)$). In this loop, the one-point calculator is called, which computes the average for the change window (parameter $w$), and compares that average to the current score. The comparison is constant time, and the change window average is $O(w)$. The window parameter $w$ is both small and constant, so the total time complexity of the one-point calculator is constant. The only non-constant operation is the iteration over the project's list of data, resulting in total complexity for the algorithm of $O(n)$, where $n$ is the number of snapshots to be analyzed. This assumes that the particle scores are previously calculated. These complexities would add, not multiply, so the true cost of scanning a series of snapshots would be the cost of calculating the particle score or the $O(n)$ cost of detecting flailing, whichever would be greater.
+
+This assessment is only valid for the post-hoc scanner implementation. A truly real-time solution would not have an array of snapshots to iterate over, rather it would assess flailing as the snapshots were generated. This makes the time spent \emph{per snapshot} most important. As the student works, each change made would be accompanied by a calculation of the particle score followed by the flailing detector calculation. Like the post-hoc implementation above, the time complexities of computing scores and flailing would add, not multiply, so the complexity class would be the greater of the two. 
+
+The calculation of particle scores depends on the definition of the solution, and the number of particles defined in it. Each particle can contain one to three tests, or more, with each test operating on a successively smaller subset of blocks. The driving factor of time complexity are the ``find'' tests, which need to execute a workspace-wide search for blocks of a specific type, and of which there are at most one per particle definition. These tests are currently implemented as linear searches, with time complexity of $O(n)$, where $n$ is the number of blocks in the project. 
+
+Additional optimizations could be made to the real-time version of the particle score assessor to reduce the time of the initial block search. By adding an indexed data structure to track blocks by type, that search could be implemented as a search tree, which would reduce the complexity to $\Theta(logn)$. The flailing detector would only operate on the most recent $w$ data points, so each change would be constant-time, described by the window parameter $w$. The ideal total time complexity would then be $\Theta(logn) + O(w) \in \Theta(logn)$. A less-optimized solution which closer resembles the current working implementation would be $O(n) + O(w) \in O(n)$.
+
+
+
+\section{Validation}
+Additional post-hoc studies were conducted to validate the tools presented in this chapter. The argument can be summarized:
+\begin{description}
+\item A. Blocks playback was a suitable tool for manually assessing the presence of flailing behavior in projects (Section \ref{sec:manual-assessment}). 
+\item B. Particle Score charts were as good as (A) for manually assessing the presence of flailing within student projects (Section \ref{sec:validation-particle}).
+\item C. (B) implies that Particle Scores contain necessary data for the assessment of flailing
+\item D. The Flailing Detector Algorithm was effective for automatically assessing the presence of flailing behavior \emph{per snapshot} (Section \ref{sec:validation-flailing-detector}).
+\end{description}
+
+\subsection{Particle Analysis for Improved Assessment of Flailing}
+\label{sec:validation-particle}
+When manually coding for flailing behaviors in a project, one technique was to use the blocks playback mechanism to replay the entirety of the project, in full detail, to view the project's development similarly as if observed over the student's shoulder. This method, while providing the most possible information to the assessor, was time-consuming, and required days to encode a single classroom of data. The Particle Analysis method may be used as a feature extractor, to distill these data into a more succinct form, that still supply information necessary to manually assess for flailing. 
+
+The protocol to manually assess particle scores for flailing involved reading the scores in chart form, such as Figures \ref{fig:smooth_chart}, \ref{fig:fits_starts_chart}, or \ref{fig:flailing_chart}. Each project was coded according to the patterns described in Section \ref{sec:patterns}: \emph{smooth}, \emph{fits and starts}, or \emph{flailing.} These codes conceptually mapped closely to the codes from the earlier playback analysis: \emph{good/great}, \emph{typical/none}, and \emph{flailing.}
+These codes were then compared with the similar codes found from the manual assessment of blocks playback data using a Chi-Square test of independence.
+
+The Chi-Square test was selected as it can determine relation between categorical variables, which both coding sets were. The requirements for this test were met with two categorical variables (playback-derived codes and particle-score-derived codes), two or more categories for each variable, and independence of observations. The null hypothesis ($H_0$) stated that the variable 1, playback-derived codes, were independent or variable 2, the particle-score-derived codes. The alternative hypothesis ($H_1$) was the opposite, and stated that the the variables were related.
+
+The test had $n=138$ projects. The crosstabs table of this test is shown in Table \ref{tab:crosstab-blocks-particle}.
+\begin{table}
+\begin{centering}
+	\begin{tabular}{l l r r r | r}
+			&& \multicolumn{3}{c}{Particle-derived Codes} 	\\
+			&	& flail 	& smooth 	& fits and starts 	& total	\\ \hline
+	\multirow{3}{*}{Playback-derived Codes}
+	& flailing 		& 17	& 2			& 11		& 30	\\
+	& good/great	& 3		& 19		& 16		& 38	\\
+	& typical/none	& 18	& 10		& 42		& 70	\\ \hline
+	total	&  		& 38	& 31		& 69		& 138
+	\end{tabular}
+	\caption[Flailing crosstabs between Blocks Playback and Particle Scores]{Crosstabs between Blocks Playback and Particle Score codes for flailing within a project.}
+	\label{tab:crosstab-blocks-particle}
+\end{centering}
+\end{table}
+
+The Chi Squared test returned a Pearson coefficient of 35.837, with no cells having fewer counts than expected. With 4 degrees of freedom, the asymptotic significance was $p<.001$. We rejected the null hypothesis, and we concluded that there was a significant association between the coding set derived from blocks playback and the coding set derived from reading particle score charts ($\chi^2(4)> = 35.837$, $p < .001$). 
+
+
+\subsection{Validating the Flailing Detector}
+\label{sec:validation-flailing-detector}
+In the previous sections, the analysis techniques categorized entire projects by the degree of the flailing they contained. That method is different than the actual goal of the flailing detector, which needs to operate in real-time, evaluating the data as it generated. This change-by-change assessment must work without the benefit of the entire project's vector for context. To validate this type of data, a portion of the database were manually assessed by researchers for flailing on a point-by-point basis, by evaluating periods of flailing, noting their start and end points, and filling the ranges of points with the flailing or non-flailing. The result was a new data set where each change was marked as flailing or not by a researcher, and this set was compared to the results of the same data as processed by the flailing detector algorithm. 
+
+The data collected from the study contained 8,778 unique data points, where each point was a change made to a project. These points were across 138 projects, including both the Debugging and Temperature activities. A validation subset for manual assessment was randomly selected to represent 10\% of the total data. The procedure for this selection to randomly select a project, and add its changes to the selection. Additional projects were randomly selected until the number of changes in the selected projects was greater than or equal to 10\% of the total change count. The final validation subset contained 16 projects, listed in Table \ref{tab:selected-projects}, representing 881 changes, which was 10.03\% of the total data collected.
+
+\begin{table}
+\begin{centering}
+\begin{tabular}{l l r}
+	Activity & Code Name & Change Count \\ \hline
+	debugging & AcapulcoDeer & 44\\
+	debugging & CórdobaSalmon & 132\\
+	debugging & HachiojiPeafowl & 48\\
+	debugging & HamamatsuFrog & 9\\
+	debugging & JinzhouGorilla & 61\\
+	debugging & NagpurAlpaca & 8\\
+	debugging & PeshawarGnat & 12\\
+	debugging & PointeCheetah & 95\\
+	debugging & PueblaVulture & 40\\
+	debugging & XuzhouLoris & 25 \\
+	temperature & DortmundBat & 64\\
+	temperature & FukuokaGoldfinch & 70 \\
+	temperature & LondonDragonfly & 99 \\
+	temperature & UfaDogfish & 42\\
+	temperature & VladivostokCurlew & 90 \\
+	temperature & ZaporizhzhyaFalcon & 42 \\ \hline
+	\multicolumn{2}{r}{Total} & 881
+\end{tabular}
+\caption[Projects and Change Counts Selected for the Validation Data Set]{Projects and change counts selected for the validation data set, which represented 10.03\% of the database, as counted by individual changes.}
+\label{tab:selected-projects}
+\end{centering}
+\end{table}
+
+The Flailing Detector algorithm was applied to the same projects in the validation selection with a change window parameter of 5. There were two coded data sets for comparison, both generated from the source data. The first set was the human-coded flailing and the second, the automatically generated flailing codes from the algorithm. These sets were tested using the Chi-Square Test of Independence, similarly to the particle assessment test in Section \ref{sec:validation-particle}.
+
+The Chi Squared test was selected as it can determine relation between categorical variables. The requirements for this test were met with two categorical variables (flailing per point, from two sources), two or more categories for each variable (flailing, non-flailing), and independence of observations. The null hypothesis ($H_0$) stated that the variable 1, the manually assessed codes, were independent or variable 2, the automatically assessed codes. The alternative hypothesis ($H_1$) was the opposite, and stated that the the variables were related.
+
+The test had $n=881$ changes (points). The crosstabs table of this test is shown in Table \ref{tab:crosstab-flailing-detector}.
+\begin{table}
+\begin{centering}
+	\begin{tabular}{l l r r | r}
+			&& \multicolumn{3}{c}{Automatic Codes} 	\\
+			&	& Flailing 	& Non-Flailing 	& total	\\ \hline
+	\multirow{2}{*}{Manual Codes}
+	& Flailing 		& 421	& 161		& 582	\\
+	& Non-Flailing	& 42	& 257		& 299	\\ \hline
+	total	&  		& 463	& 418		& 881
+	\end{tabular}
+	\caption[Flailing Crosstabs for Flailing Detector Validation]{Crosstabs between manually assessed and automatically assessed flailing on the same data, to validate the flailing detector algorithm as similarly effective as manual interpretation.}
+	\label{tab:crosstab-flailing-detector}
+\end{centering}
+\end{table}
+
+The Chi Squared test returned a Pearson coefficient of 269.154, with no cells having fewer counts than expected. With 2 degrees of freedom, the asymptotic significance and Fisher's Exact Test significance were both $p<.001$. We rejected the null hypothesis, we concluded that there was a significant association between the manually-assessed and automatically-generated flailing codings, which validated the Flailing Detector Algorithm ($\chi^2(2)>= 269$, $p < .001$). 
+
+
+
+
 
 \section{The Classroom Console}
 \label{sec:classroom-console}
