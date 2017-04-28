@@ -2,58 +2,49 @@
 
 %\section{Research Focus} %TODO turn back on and do it
  
+Computer science education has long revolved around trying to understand the cognitive processes specific to learning computer science ideas, with a primary focus on studying programming concepts. This arm of research was strongly developed in the 1980's, including landmark pieces such as \citet{duboulay-1986} and \citet{perkins-1986}. The following decade brought Constructionism \citep{papert1991situating} and Epistemological Pluralism \citep{turkle1990epistemological}, which guided the way towards more accessible, student-oriented environments for learning. At the same time, visual languages were finding new voices \citep{raymond-1991}, and the combination of the two was not far off. But still today we are asking a core question--- what are students thinking while they are learning to program?
+
+A recent trend in computing education research has been \emph{fine-grained instrumentation,} which allowed researchers to see programs as they were being programmed by students. This methodology peered into the development process, and showed much more of the story than the final program alone could provide. The idea to capture small changes over time has truly caught on. The sub-field of \emph{learning analytics} has emerged as artificial intelligence teams have tried to mine this data for educationally valuable insights, with a noteworthy explosion of such systems this decade \citep{piech-2012, sudol2012calculating, berland-2013}. This dissertation builds off of those studies and others to further investigate what insights can be found in fine-grained data captured during the programming process. 
+
+%ABSTRACT Also recently, blocks-based programming languages have become popular and practical for pedagogical programming environments. These environments afford new dimensions of learner interaction with code. 
+
+
+
 \section{Problem Statement} \label{sec:problem-statement}
 \begin{quote}
 \textbf{A real-time algorithm exists to detect when a student using a block-based programming language is flailing.}
 \end{quote}
 
-The central research question asks how accurate of a flailing detector can be built to operate on the data collected. Related questions ask how to how to build it, how to assess its efficacy, and how it can best be of use to teachers.
+The central research question asks how accurate of a flailing detector can be built based on code snapshots. Related questions of this dissertation project ask how to how to build it, how to assess its efficacy, and how it can best be of use to teachers.
 
 This question asks about \emph{flailing,} a behavior of making unproductive, sometimes random changes to the code, possibly elicited by the student being lost, and requiring teacher intervention. A thorough discussion of flailing and other behaviors will follow in Section \ref{sec:behaviors}.
 
 When a student is flailing, they are still on-task, but may need immediate intervention to return to productivity, and hypothetically, learning \citep{baker2004off, perkins-1986}. Detection of a flailing student, in real time, could be a useful tool for classroom teachers, who need to spend their class time judiciously. 
 
-%The complete set of research questions is below, with classes presented in ascending order of research importance:
-
-% \begin{enumerate}
-% \item Questions Concerning the Construction of a Distributed Snapshot System
-
-% \begin{enumerate}
-% \item \label{RQ:1.1} How can a system be built to snapshot blocks-based programming in App Inventor? 
-% \item \label{RQ:1.2} How can captured snapshot data from ephemeral, remote user sessions be securely and consistently housed in a central server? 
-% \item \label{RQ:1.3} What is the correct degree of granularity for such snapshot data?
-% \item \label{RQ:1.4} What actions by the user in the graphical, blocks-based system are appropriate to trigger a snapshot?
-% \item \label{RQ:1.5} Can data collected by such a system provide clear representations of student progress in a programming work?
-% \item \label{RQ:1.6} Particular to App Inventor, how can this data be viewed and replayed to give a viewer a real sense of the work?
-% \end{enumerate}
-
-% \item Questions Concerning the Analysis of Snapshot Data
-% \begin{enumerate}
-% \item \label{RQ:2.1} Are changes in secondary notation (block position and movement) extractable from within snapshot data?
-% \item \label{RQ:2.2} What other useful measures are extractable from blocks language snapshots?
-% \item \label{RQ:2.3} What techniques would be useful for future blocks instrumentation efforts to improve data efficacy?
-% \end{enumerate}
-
-% \item Questions Concerning the Nature of Blocks Programming
-% \begin{enumerate}
-% \item \label{RQ:3.1} Can student behavior patterns be detected in snapshot data?
-% \item \label{RQ:3.2} Does a pattern of block movement or manipulation exist that signals that the student is not working productively?
-% \item \label{RQ:3.3} Can the ratio of secondary notation and formal notation changes indicate anything about the programmer?
-% \item \label{RQ:3.4} Do the counts of measures, such as secondary notation changes, correlate with other independent variables?
-% \item \label{RQ:3.5} Could these patterns and behaviors be detected in real-time?
-% \end{enumerate}
-
-% \end{enumerate}
 
 
 \section{Approach}
-App Inventor was modified to include new instrumentation features, which captured snapshot data on every change that the user made to their code. These snapshots were transmitted to a collection server, where they were stored. Multiple cohorts of middle school students enrolled in formal and informal app development curricula were selected to participate in one or two short activities for this study. The project files from those activities, with full snapshot history, were were isolated for analysis. Features were extracted from the snapshot histories to be used in characterizing behavior. %TODO complete methodology (atomic analysis, console)
+In this work, student progress during a programming challenge activity was investigated. App Inventor was modified to include new instrumentation features, which captured fine-grained data on every edit operation that a student made to their code. We called each of these captures a \emph{snapshot,} and a projects contained anywhere from just a few snapshots to hundreds. These snapshots were transmitted to a collection server, where they were de-identified and then stored for later analysis.
 
-A new feature extraction method was devised that estimates the student's proximity to the canonical solution of the activity. This method, called \emph{Solution Fragment Analysis}, provided an easily visualized and easily interpreted view into a student's progress over the course of the activity. This method was also computationally efficient, such that it can be implemented as a real-time feedback system for instructors.
+A new feature extraction method was devised that estimated the student's proximity to the canonical solution of the activity. This method, called \emph{Solution Particle Analysis}, provided a single score for each snapshot, so a student's history over the activity could be considered as a single-dimensional variable over time. This analysis method required an additional constraint be added to the problem-- that the activity have a canonical, expected solution. This precludes this analysis method from being immediately applicable to open-ended projects. Recommendations on what work would be necessary to assess open-ended projects with this tool will be addressed in Section \ref{sec:futurework}.
 
-From the Solution Fragments, a visualization was created to allow post-hoc analysis of an individual over an assignment, or the class in aggregate. Another visualization was designed in the form of a Classroom Console, to provide teachers with useful, easily interpreted, real-time aid for their classroom orchestration. 
+Visualization for those data were designed and implemented, the simplest of which was a chart of score over time. This chart method was easily interpreted, and was shown to be a succinct view into a student's progress over the course of the activity. Using this visualization, researchers were able to estimate the presence of flailing equally well as when inspecting the code edits directly. This visualization was also much faster to assess. The same assessment task that took days of analysis of snapshot data took only hours when using the particle score charts.
+
+Multiple cohorts of middle school students enrolled in formal and informal app development curricula were selected to participate in one or two short activities (20-40 minutes) for this study. These activities were conducted on the specially instrumented version of App Inventor, and full snapshot histories were collected for each student. 
+
+A class of behaviors called ``flailing'' was developed, and was operationalized to include patterns of repetitive or non-productive edits. These patterns, when detected, suggested disengagement and potential lack of problem understanding. The analysis centered around identifying ``flailing'' in real data, and presenting it in a reliable and classroom-actionable way.
+
+Another visualization was designed in the form of a Classroom Console, to provide teachers with useful, easy, and real-time approximation of all of their students' progress at once. This console provided a ``landscape view'' of the classroom. A cohort of teachers who use App Inventor were interviewed and shown the console prototype, and their opinions on the potential efficacy of this console were overwhelmingly positive. 
+
+A simple algorithm was developed, The Flailing Detector, that utilized the particle scores to demonstrate that ``flailing'' could be automatically assessed. 
+
+
 
 \section{Hypothesis and Contributions}
+%ABSTRACT In addition to visualizations of individual student progress, a prototype of a classroom ``dashboard'' was developed. This is intended to be used as real-time tool for teachers, to help teachers to assess their students engagement, progress, and degree of flailing during a live lab session. This tool may be helpful to improve teaching effectiveness by aiding in classroom orchestration, empowering the teacher to better employ their resources in the moment, to better keep all students on track.
+
+%ABSTRACT From these data, three patterns of student were discovered: those who smoothly completed the assignment, those who worked their way through with periods of flailing and periods of success, and those who only flailed and never succeeded. This rating system allowed for the development of a moment-by-moment analysis of flailing, which may provide a real-time assessment of students engagement with the activity, and serve as a tool to further empower the teacher to orchestrate their resources during a lab session.
+
 The author hypothesized that a ``flailing detector'' was possible using real-time, fine-grained analysis of students' edit operations while programming. This ``flailing detector'' was realized by applying a situational constraint that the students must be working on a known activity that has a canonical solution. Such problems are common in the early portion of any programming course, which is also the period when teachers have the most difficult job in keeping all the students in their zones of proximal development. This tool took the form of a Classroom Console, which was presented in a focus group format to K-12 teachers and university professors in the United States and beyond, who validated that the tool would be useful in their own teaching practice, and provided feedback to inform its development into a fully realized application.
 
 The particle analysis method can be applied to other languages, and is particularly well-suited to blocks languages. This method can be used to inform future real-time analysis tools that aim to help classroom orchestration through real-time feedback of student progress within a the lab session.

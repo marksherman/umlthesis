@@ -1,30 +1,32 @@
 \chapter{Analysis}
 \label{chap:analysis}
 
-The debugging activity collected 6890 snapshots over 119 projects. The temperature activity collected 2296 snapshots over 35 projects. In total, 9186 snapshots were analyzed. From these data, features were extracted that represented the type of code change that occurred in a snapshot. After some analysis of these change-type features, a new analytical method was constructed to provide teachers with useful information towards identifying flailing, off-task, or disengaged behavior. The new method, called \emph{solution particle analysis,} did not depend on the change-type features, instead using purpose-specific new feature extractor. This technique is described below in Section \ref{sec:particle-analysis}.
+The analysis plan included four major parts: process snapshot data that was collected and extract measures from it, analyze those measures for signals of flailing behavior, visualize those signals, and design an algorithm to automatically assess flailing. This chapter provides detail on all of these components.
 
-The particle analysis method allowed for the development of a visual display tool that allowed immediate insight into the state of a classroom in the recorded data, in such a way that would aid a teacher in coordinate their resources. 
+The debugging activity collected 6890 snapshots over 119 projects. The temperature activity collected 2296 snapshots over 35 projects. In total, 9186 snapshots were analyzed. From these data, features were extracted that represented the type of code change that occurred in a snapshot. After some analysis of these change-type features, a new analytical method was constructed that estimated student's progress at each change. The new method, called \emph{solution particle analysis,} was a purpose-specific design to estimate the student's degree of completion of the activity. This technique is described below in Section \ref{sec:particle-analysis}. 
 
-The process of generating the extracted features, which served as the raw data for all analysis techniques, is discussed below in Section \ref{sec:data-processing}.
+The data generated from the particle analysis method lent itself to visualization. A visual display tool was designed and developed that allowed immediate insight into the state of an entire classroom in the recorded data, in such a way that would aid a teacher in coordinate their resources.
+
+A simple algorithm was developed to automatically identify the ``flailing'' class of behaviors from the particle analysis data.
 
 
 \section{Data Processing Pipeline}
 \label{sec:data-processing}
 
-Data was imported from the git database into the analysis environment using a process shown in Figure \ref{fig:data-import-process}. The key step of this process was ``Extract change features,'' where the tests for the types of changes in that snapshot were executed. Feature extraction is described in detail below in Section \ref{sec:feature-extraction}.
+Data were imported from the Git database into the analysis environment using a process shown in Figure \ref{fig:data-import-process}. The key step of this process was ``Extract change features,'' where the tests for the types of changes in that snapshot were executed. Feature extraction is described in detail below in Section \ref{sec:feature-extraction}.
 
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{diagrams/data-import-process}
-  \caption[The data importing process]{The data importing process. The entire database was scanned for projects that contain an identifiable element, which were then loaded directly from git. Each change from git was processed for error mitigation and necessary metadata generation, then the features were extracted. After feature extraction, character-wise text field changes were reduced, and then the interval times between snapshots were generated.}
+  \caption[The Data Importing Process]{The data importing process. The entire database was scanned for projects that contain an identifiable element, which were then loaded directly from Git. Each change from Git was processed for error mitigation and necessary metadata generation, then the features were extracted. After feature extraction, character-wise text field changes were reduced, and then the interval times between snapshots were generated.}
   \label{fig:data-import-process}
 \end{figure}
 
 The import pipeline had many tasks to accomplish, starting with identifying the projects that were relevant for analysis. The App Inventor instance that was used for this study was also used for the entirety of the summer camp curricula, so there were many projects captured in the snapshot database that were not part of the activities specific to this study. This was an intentional part of the protocol to make transition easier for the camp students by only having one App Inventor instance with which to interface. The in-class activities were better isolated, so researchers were able to prepare the room in advance to steer the students transparently towards the specialized instance. 
 
-The activities that were part of this study needed to be found in the database. Students had the ability to rename projects at any point, so it was possible (albeit unlikely) that a relevant project could be renamed. Therefore the protocol included a unique element in the projects, a ``magic string'' in a hard-to-find property of the project. The debugging activity and temperature activity each had a unique identifier string, and these strings were included in the starter code that all students were given. These unique elements were then detectable by scanning the files in the git database prior to import. There were instances of students changing the names of the projects, which demonstrated the need of the unique identifier. 
+The activities that were part of this study needed to be found in the database. Students had the ability to rename projects at any point, so it was possible (albeit unlikely) that a relevant project could be renamed. Therefore the protocol included a unique element in the projects, a ``magic string'' in a hard-to-find property of the project. The debugging activity and temperature activity each had a unique identifier string, and these strings were included in the starter code that all students were given. These unique elements were then detectable by scanning the files in the Git database prior to import. There were instances of students changing the names of the projects, which demonstrated the need of the unique identifier. 
 
-Once a list of projects were identified using their unique elements, those projects were loaded from git into the analysis environment. The git interface opened each project's repository, extracted a list of all commits, and then checked out each commit in turn, capturing the contents of the files for each commit. A commit represented a single snapshot, and the terms ``snapshot'' and ``change'' were used interchangeably to describe the contents of the commit after this stage. 
+Once a list of projects were identified using their unique elements, those projects were loaded from Git into the analysis environment. The Git interface opened each project's repository, extracted a list of all commits, and then checked out each commit in turn, capturing the contents of the files for each commit. A commit represented a single snapshot, and the terms ``snapshot'' and ``change'' were used interchangeably to describe the contents of the commit after this stage. 
 
 Each snapshot was checked for corruption at time of import. Following that, two metadata maps were generated for each snapshot: a map of block ID numbers, and a map of block parents. These maps allowed the feature extractor to easily access a block by its ID number (which would require a full tree traversal without), and easily look up the parent of any given block. With the maps generated, the feature extractor would then be able to run. 
 
@@ -38,16 +40,16 @@ The following sections delve further into certain components of the import pipel
 \subsection{Corruption Detection and Mitigation}
 Some forms of corruption were found in the snapshot data, all concerning the blocks representation. There were four corruption modes, which are explained below, with their respective mitigation strategies.
 
-The first corruption mode was malformed XML files which contained text beyond the closing XML tag. This, of course, crashed the XML parser. Within the debugging activities, only seven snapshots had this malformation, which were corrected by trimming the excess text. It was noteworthy in those cases that the junk excess text was a repetition of the last characters of the file, lends to a hypothesis of the source of the corruption, discussed below.
+The first corruption mode was malformed XML files which contained text beyond the closing XML tag. This, of course, crashed the XML parser. Within the debugging activities, only seven snapshots had this malformation, which were corrected by trimming the excess text. It was noteworthy in those cases that the junk excess text was a repetition of the last characters of the file; this lends to a hypothesis of the source of the corruption, discussed below.
 
 The second form was rare, where a snapshot had no contents for the blocks file. In the entire collection of debugging activity snapshots ($n = 6890$), only three snapshots had empty blocks. These snapshots were detected during import and were not included in the research data. The overall history of the projects containing these empty snapshots were unaffected. 
 
-Both of these corruptions were indicative of a bug in the extraction of the block data from Blockly in the browser. It was possible that the snapshot mechanism was able to capture the XML file while it was in an inconsistent state, such as mid-write. This bug may be within the Blockly framework itself, and further investigation is recommended before attempting larger-scale deployment of this method.
+Both of these corruptions were indicative of a bug in the extraction of the block data from Blockly in the browser. It was possible that the snapshot mechanism was able to capture the XML file while it was in an inconsistent state, such as mid-write. This bug may be within the Blockly framework itself, and further investigation should be conducted before larger-scale deployment of the present method.
 
-The two above corruptions were easily mitigated. A third mode of corruption, however, resulted in properly formed XML, but potentially erroneous data. This mode was characterized by multiple changes happening in a single snapshot, which should have been extremely rare, as each snapshot was triggered by an atomic action in the editor. In reality, there was a small amount of caching in the capture mechanism, as discussed in Section \ref{sec:mod-ai}, which may have contributed to this corruption. There was no inherent problem with multiple changes in a single snapshot, if they all occurred within the capture window of that snapshot. In these erroneous cases, one or more actions appeared to be inconsistently represented over time, which caused git and the subsequent analysis tools to do, undo, and redo the same action in very small spans of time, artificially inflating the representation of those events. 
+The two above corruptions were easily mitigated. A third mode of corruption, however, resulted in properly formed XML, but potentially erroneous data. This mode was characterized by multiple changes happening in a single snapshot, which should have been extremely rare, as each snapshot was triggered by an atomic action in the editor. In reality, there was a small amount of caching in the capture mechanism, as discussed in Section \ref{sec:mod-ai}, which may have contributed to this corruption. There was no inherent problem with multiple changes in a single snapshot, if they all occurred within the capture window of that snapshot. In these erroneous cases, one or more actions appeared to be inconsistently represented over time, which caused Git and the subsequent analysis tools to do, undo, and redo the same action in very small spans of time, artificially inflating the representation of those events. 
 
-One project was particularly egregious, and showed this corruption in 71 of its 245 commits, rendering nearly a third of its data unreliable. That project was removed, which left only 50 such potential errors in the remainder of the database, many of which were mitigated by text field accumulator, described in Section \ref{sec:text-acc}. 
-
+One project was particularly egregious, and showed this corruption in 71 of its 245 commits, rendering nearly a third of its data unreliable. It is currently unknown why that project had this abnormal error rate. The most plausible speculation was that the particular browser or computer being used had an external agent, such a browser plugin or virus, that was interfering with the browser's reading of time. If the snapshots were processed significantly out-of-order, or labeled with widely incorrect timestamps, the resulting data would be nearly impossible to discern. This may have been the case, but there is no current way to know for sure, as attempts to reproduce the error failed.
+That project was removed, which left only 50 such potential errors in the remainder of the database, many of which were mitigated by text field accumulator, described in Section \ref{sec:text-acc}. 
 A data consistency bug was found where a project was opened over more than one session. In App Inventor, if a project was opened in a second, disjoint session, such as the following day, the block ID numbers change, causing the feature extractors to falsely over-report blocks being deleted and added, when really the same blocks have been re-numbered. The strategy employed was to ignore snapshots that occurred at a time stamp beyond the maximum time of the activity.
 
 The total percentage of potentially erroneous snapshots in the debugging activity dataset was 0.84\%. These are summarized in Table \ref{tab:data-corruption}.
@@ -68,7 +70,7 @@ The total percentage of potentially erroneous snapshots in the debugging activit
 	Multiple changes 						& 50 &(0.7\%) 				& accepted as insignificant 			\\
 	Multi-session 							&  3 &(0.04\%) 				& data past 40 minutes ignored
 	\end{tabular}
-	\caption[Data corruption modes]{Data corruption modes, their prevalence, and mitigation strategy.}
+	\caption[Data Corruption Modes]{Data corruption modes, their prevalence, and mitigation strategy.}
 	\label{tab:data-corruption}
 \end{centering}
 \end{table}
@@ -88,43 +90,43 @@ The total percentage of potentially erroneous snapshots in the debugging activit
 	\item [Properties Modified] One or more properties of a block has changed, which could indicate use of the mutator to change a block's semantics (such as changing the number of addends in an addition block). Intended as a catch-all if the other tests missed something, and was rarely found in the data.
 	
 \end{labeling}
-\caption[Features extracted from snapshots]{Features extracted from snapshot data.}
+\caption[Features Extracted from Snapshots]{Features extracted from snapshot data.}
 \label{tab:features-extracted}
 \end{table}
 
 The features extracted by this module were listed and described above. % in Figure \ref{tab:features-extracted}. 
 This section outlines the specific definitions that constitute the feature tests. All of these tests operated on snapshots of the same project that were adjacent in time. 
-They detected differences between the two, often utilizing the meta data maps described above in Section \ref{sec:data-processing}. 
+They detected differences between the two, often using the meta data maps described above in Section \ref{sec:data-processing}. 
 % Source code for these algorithms are presented in Appendix \ref{src:feature-extraction-tests}.
 
 The test for \emph{Blocks Added} and \emph{Blocks Deleted} were the same routine, which assembled a list of blocks by their ID numbers for both snapshots and compared differences between those lists using set arithmetic. 
 
-The test for \emph{Blocks Moved in Space} assembled a list of blocks that were present in both snapshots, and iterated that list looking for blocks who were both top-level and whose coordinates changed. There was an important distinction made here- blocks that were nested within other blocks were not top-level and therefore did not trigger the \emph{Blocks Moved in Space} flag when they moved as a consequence of their parent moving. Only blocks whose parent is the workspace itself may return positive from this test, and then, only if they actually moved on the workspace.
+The test for \emph{Blocks Moved in Space} assembled a list of blocks that were present in both snapshots, and iterated that list looking for blocks which were both top-level and whose coordinates changed. There was an important distinction made here--- blocks that were nested within other blocks were not top-level and therefore did not trigger the \emph{Blocks Moved in Space} flag when they moved as a consequence of their parent moving. Only blocks whose parent is the workspace itself may return positive from this test, and then, only if they actually moved on the workspace.
 
 \emph{Blocks Moved in Context} was the opposite of the above test, where it detected if a block moved in computational context, indicated by a changed parent. Similarly, this test assembled a list of blocks common to both snapshots, and iterated across that list. The iteration checked if the parent for the block was the same in both snapshots, and returned true if they were not. 
 
 To detect \emph{Fields Changed}, common blocks were listed and then filtered for field properties. Those fields were searched for cases where the value of the fields differed between the two snapshots.
 
-The final test, \emph{Properties Modified} caught any other modifications to a block. This test was more complex. Like those above, it assembled a list of blocks present in both snapshots. It then ran an exhaustive element-wise equality check on each block, comparing the version in each snapshot. If the equality check returned true, that block did not change in any way. If the equality check was false, then lists of all children for both blocks were assembled, which included properties, data fields, mutator instructions, and other Blockly metadata. This step excluded text fields, as they were covered in a previous test. If the lengths of the lists of children were unequal, then the routine returned true, as these particular blocks definitely changed between the two snapshots. If they have the same number of children, then each pair of children were iterated, and the element-wise equal was applied to each of them, effectively running a first-level recursive equality test. If that test did not find any differences, then the routine returned false. That final false return is a condition that should be impossible, but was included defensively, as there may have been edge cases possible in Blockly that were not common in known to the researchers at the time of this design.
+The final test, \emph{Properties Modified} caught any other modifications to a block. This test was more complex. Like those above, it assembled a list of blocks present in both snapshots. It then ran an exhaustive element-wise equality check on each block, comparing the version in each snapshot. If the equality check returned true, that block did not change in any way. If the equality check was false, then lists of all children for both blocks were assembled, which included properties, data fields, mutator instructions, and other Blockly metadata. This step excluded text fields, as they were covered in a previous test. If the lengths of the lists of children were unequal, then the routine returned true, as these particular blocks definitely changed between the two snapshots. If they have the same number of children, then each pair of children were iterated over, and the element-wise equal was applied to each of them, effectively running a first-level recursive equality test. If that test did not find any differences, then the routine returned false. That final false return is a condition that should be impossible, but was included defensively, as there may have been edge cases possible in Blockly that were not common in known to the researchers at the time of this design.
 
 
 \subsection{Text Field Change Accumulator}
 \label{sec:text-acc}
-In the course of working on their activities, students often manipulated fields of text, including text literals, variable names, procedure names, and parameter names. Examples of blocks utilizing open text fields are shown in Figure \ref{fig:text-fields}. Whenever a text field was modified, the change event was triggered for every character. This was a degree of granularity too fine for meaningful analysis, as character modification events are considered too primitive to be of use \citep{omori2008change}. The snapshot system at runtime could not discern the beginning and end of field editing events, so the change event feature \emph{Fields Changed} from Table \ref{tab:features-extracted} was grossly over-represented. 
+In the course of working on their activities, students often manipulated fields of text, including text literals, variable names, procedure names, and parameter names. Examples of blocks utilizing open text fields are shown in Figure \ref{fig:text-fields}. Whenever a text field was modified, the change event was triggered for every character. This was a grain size too fine for meaningful analysis, as character modification events are considered too primitive to be of use \citep{omori2008change}. The snapshot system at runtime could not discern the beginning and end of field editing events, so the change event feature \emph{Fields Changed} from Table \ref{tab:features-extracted} was grossly over-represented. 
 
 To combat this over-representation, sequences of character-wise change events needed to reduced to their final state, which then represented a single change at the same degree of abstraction as the surrounding block manipulations. This reduction was accomplished with an accumulator algorithm, which scanned a project's change history and identified uninterrupted sequences of field modifications to the same field. The algorithm deleted all but the final \emph{Fields Changed} events, leaving only the final state of the modification for further processing. This algorithm had a 10-second timeout, so sequential edits to the same field would be considered different events if there were more than 10 seconds between them. Changes to different field blocks were also considered a new event. This algorithm is shown and further explained in Appendix \ref{src:reduceFieldChanges}.
 
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{images/ch4-text-fields}
-  \caption[Examples of text fields in App Inventor]{Examples of some text fields in App Inventor. All of the fields, represented by the text in shaded bubbles, could be edited arbitrarily by the student.}
+  \caption[Examples of Text Fields in App Inventor]{Examples of some text fields in App Inventor. All of the fields, represented by the text in shaded bubbles, could be edited arbitrarily by the student.}
   \label{fig:text-fields}
 \end{figure}
 
 
 \section{Manual Assessment}
 \label{sec:manual-assessment}
-To get a feel for the data collected, all student projects were inspected by researchers using the snapshot playback mechanism described in Section \ref{sec:playback}. Looking at the students' blocks and their changes over time, researches took note of projects that demonstrated flailing behavior and projects with strong efficacy towards solving the problem. The remaining projects were considered typical. This analysis did not utilize a rubric, nor was intended to be absolute nor complete, as it relied entirely on judgment by the researcher. It did serve to develop an understanding of common patterns, which will be discussed in Section \ref{sec:patterns}. This assessment was necessary to develop the in-depth analysis techniques and visualizations described in sections below. The flailing behaviors were characteristically repetitive, where blocks would move in ways that did not change or improve the state of the app. The high-efficacy behaviors were easier to characterize, as the solution became closer to correct.
+To get a feel for the data collected, all student projects were inspected by the author and an undergraduate assistant, using the snapshot playback mechanism described in Section \ref{sec:playback}. Looking at the students' blocks and their changes over time, researches took note of projects that demonstrated flailing behavior and projects with strong efficacy towards solving the problem. The remaining projects were considered typical. This analysis did not utilize a rubric, nor was intended to be absolute nor complete, as it relied entirely on judgment by the researcher. It did serve to develop an understanding of common patterns, which will be discussed in Section \ref{sec:patterns}. This assessment was necessary to develop the in-depth analysis techniques and visualizations described in sections below. The flailing behaviors were characteristically repetitive, where blocks would move in ways that did not change or improve the state of the app. The high-efficacy behaviors were easier to characterize, as the solution became closer to correct.
 
 In detail, manual assessment rated projects efficacy ``ok,'' ``good,'' ``great,'' or none, and rated repetitive, and/or nonproductive behavior as ``flailing,'' ``extreme flailing,'' ``disengaged,'' ``lacking traction,'' or none. For analysis of these ratings, they were grouped together, where ``good and great'' were a single category, as were all forms of flailing, disengagement, or low traction. All other codes and projects were considered ``typical.'' The counts of these code groups are shown in Table \ref{tab:manual-percentages}.
 
@@ -150,18 +152,21 @@ There was a small sample that was coded for both good efficacy and flailing, tot
 \section{The Particle Analysis Method}
 \label{sec:particle-analysis}
 
-The purpose of this study was to develop a tool, informed by students' fine-grained programming activities, that can aid a teacher in deciding how to apply their resources during a lab session in real time. A significant insight was reached during analysis of the above change-type features, that such a tool could be constrained to standardized, ``on-rails'' programming assignments. These closed-ended assignments constitute the bulk of many curricula in use, such as those described by  \citet{gray2012teaching}, \citet{martin2015dual}, and \citet{morelli2015analyzing}, and are particularly common at the beginning of curricula, when students are still learning the basics. This situation would be the ideal use case for an orchestration aid. 
+A significant insight was reached during the above manual analysis, that a useful classroom tool to indicate flailing could be constrained to standardized, ``on-rails'' programming assignments. These closed-ended assignments constitute the bulk of many curricula in use, such as those described by  \citet{gray2012teaching}, \citet{martin2015dual}, and \citet{morelli2015analyzing}, and are particularly common at the beginning of curricula, when students are still learning the basics. This situation would be the ideal use case for an orchestration aid. 
 
-With this insight, and the constraint it brought, design began for both a visual tool to help a teacher orchestrate, and an analysis method to power it. The resulting method was \emph{particle analysis,} which borrowed its name from the behavior of atoms and molecules. With this method, a solution to an activity can be regarded as a complex molecule, which was built up out of smaller molecules, which were themselves composed of atoms. In this analogy, every individual block was an atom, and were combined on the workspace to make expressions, representing molecules. A solution to an activity was one or more of these molecules, which could have any number of atoms within them. The analogy could be further extended, admittedly weakly, to correspond the solution to an activity with the chemical definition of ``solution,'' a homogeneous mixture composed of two or more substances. 
+To fit this constraint, an activity required a \emph{canonical solution,} which was a code state or configuration that satisfied the requirements of the activity. This canonical solution needed to be known to the teacher in advance. The expected range of difference between the canonical solution and actual student solutions needed to be small.
 
+With this insight, design began for an analysis method that could provide a metric of student progress throughout the activity. The resulting method was \emph{particle analysis,} which borrowed its name from the behavior of atoms and molecules. With this method, a solution to an activity can be regarded as a complex molecule, which was built up out of smaller molecules, which were themselves composed of atoms. In this analogy, every individual block was an atom, and were combined on the workspace to make expressions, representing molecules. A solution to an activity was one or more of these molecules, which could have any number of atoms within them. The analogy could be further extended, admittedly weakly, to correspond the solution to an activity with the chemical definition of ``solution,'' a homogeneous mixture composed of two or more substances. 
+
+``Gift code'' is code given to the students by teachers, often at the the onset of an activity, which is used to bootstrap their understanding of how the project's code works. This can be a valuable pedagogical tool \citep{martin-gift-code}. Gift code was accommodated by this analysis technique, as the progress indicator does not have to start at zero.
 
 \subsection{Features}
-Particle analysis offered a number of advantages. It offered an assessment of student progress over time during a programming activity. This metric could easily be charted over time, which created compelling illustrations of that student stories. 
+Particle analysis offered a number of advantages. It offered an assessment of student progress over time during a programming activity. This metric could easily be charted over time, which created compelling illustrations of student stories. 
 
 This approach has demonstrated a number of advantages:
 \begin{description}
-\item [Speed] The algorithm will be implementable on any imaginable platform with real-time performance. 
-\item [Breadth] It evaluates blocks even when they are disconnected from executable paths, which contain useful information.
+\item [Speed] The algorithm can be implementable on any imaginable platform with real-time performance. 
+\item [Breadth] It evaluates blocks even when they are disconnected from code execution paths, which contain useful information.
 \item [Solution-robustness] It is indicative of progress even if student arrives at a solution that doesn't exactly match the canonical solution.
 \item [Problem-robustness] Gift code is accommodated, and with it can show regression below starting point.
 \item [Independence] Instructor intervention doesn't affect quality of data, as progress is measured without needing to know where it came from.
@@ -182,33 +187,33 @@ Flailing also includes periods of oscillation, where the score may change often,
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{images/particles-graph-annotated}
-  \caption[Solution particle charted scores for two students]{Solution particle charted scores for two students, showcasing insight into their different journeys towards the activity's solution. The vertical bars denote 5-minute periods.}
+  \caption[Solution Particle Scores Charted for Two Students]{Solution particle scores charted scores for two students, showcasing insight into their different journeys towards the activity's solution. The vertical bars denote 5-minute periods.}
   \label{fig:paricles-temperature-two}
 \end{figure}
 
-The story of two students are charted in Figure \ref{fig:paricles-temperature-two}. This section will now unpack this chart and deduce the stories behind it. These students were working on the Temperature Activity, which was the harder activity, and suffered from a lack of scaffolding before the activity began. This flaw enabled a diversity of behavior patterns to be observed, two of which are depicted here. The horizontal axis is time, and the vertical is their particle score. In this example, a score of 27 was the maximum score for the assignment. The higher the data point is vertically, the closer to the solution the student was. Each mark represents a change within that student's project, and the density of the marks makes for an easy visual indicator of the speed of changes during certain periods. The darker vertical bars delineate 5-minute intervals.
+The story of two students is charted in Figure \ref{fig:paricles-temperature-two}. These students were working on the Temperature Activity, which was the harder activity, and suffered from a lack of scaffolding before the activity began. This flaw enabled a diversity of behavior patterns to be observed, two of which are depicted here. The horizontal axis is time, and the vertical is their particle score. In this example, a score of 27 was the maximum score for the assignment. The higher the data point is vertically, the closer to the solution the student was. Each mark represents a change within that student's project, and the density of the marks makes for an easy visual indicator of the speed of changes during certain periods. The three darker vertical bars delineate 5-minute intervals.
 
-At the beginning of the activity, both students had a period of inactivity (annotation 1), which was likely while instructions were presented to the class. Inactivity is visible as a lack of marks along the line. The student in blue, we'll call Student A, began work at annotation 2, and quickly made some progress. That student then reached a small plateau (3), which included a slight oscillation of score, and a high-density area of changes made without score improvements. This student continued to make generally positive progress, but fell into more high-activity periods without score improvement, at (7) and (8). Additionally, this student had large oscillations in the third period, but not in large jumps. Large jumps of many points in a single change were usually attributed to large assemblies of blocks moving in and out of context together, but this did not appear to be the case between (7) and (8), as there are marks all along the way of the oscillations. Student A completed the activity (9) 14 minutes after starting it, at approximately 16 minutes into the activity. This trajectory is not necessarily bad, but it differs starkly from Student B.
+At the beginning of the activity, both students had a period of inactivity (annotation 1), which was likely while instructions were presented to the class. Inactivity is visible as a lack of marks along the line. One student, we'll call Student A, began work at annotation 2, and quickly made some progress. That student then reached a small plateau (3), which included a slight oscillation of score, and a high-density area of changes made without score improvements. This student continued to make generally positive progress, but fell into more high-activity periods without score improvement, at (7) and (8). Additionally, this student had large oscillations in the third period, but not in large jumps. Large jumps of many points in a single change were usually attributed to large assemblies of blocks moving in and out of context together, but this did not appear to be the case between (7) and (8), as there are marks all along the way of the oscillations. Student A completed the activity (9) 14 minutes after starting it, at approximately 16 minutes into the activity. This trajectory of Student A is not necessarily bad, but it differs starkly from Student B.
 
-The other student, whom we'll call Student B, began work later at annotation 4, and moved quickly towards the solution. This student progressed largely monotonically, with the exception of one small oscillation (5). The student finished the activity with significant momentum (6), approximately 2 minutes after they began, at approximately 8 minutes into the activity. This trajectory suggested that the student understood the activity fully when they began, and only encountered minor issues. 
+The other student, whom we'll call Student B, began work later at annotation 4, and moved quickly towards the solution. This student progressed largely monotonically, with the exception of one small oscillation (5). The student finished the activity with significant momentum (6), approximately 2 minutes beginning, at approximately 8 minutes into the activity. This trajectory suggested that the student understood the activity fully at the outset, and only encountered minor issues. 
 
-We can hypothesize from these trajectories that Student A conducted significantly more experimentation, as their solution score was usually in flux. This student did, however, exhibit periods of rapid changes without a score improvement, which was likely either indicative of flailing or non-functional block re-organization. These possible behaviors, at a glance, represent opposite degrees of concern. If the rapid changes without improvement were flailing, then that student likely required intervention. If the rapid changes were block reorganization, then that student's need for help may depend on the current context, as re-organization could be a disengaged, time-wasting behavior. %TODO I know I have a reference for this.
+We can hypothesize from these trajectories that Student A conducted significantly more experimentation, as Student A's solution score was usually in flux. This student did, however, exhibit periods of rapid changes without a score improvement, which was likely either indicative of flailing or non-functional block re-organization. These possible behaviors, at a glance, represent opposite degrees of concern. If the rapid changes without improvement were flailing, then that student likely required intervention. If the rapid changes were block reorganization, then that student's need for help may depend on the current context, as re-organization could be a disengaged, time-wasting behavior. %TODO I know I have a reference for this.
 
-In this study, interventions from instructors or assistants during the activities were not documented. The lack of intervention data did not affect this analysis, as progress was identifiable regardless of assistance received. This method flipped the problem into an analysis tool, as with it we could make informed guesses as to when assistance took place. In Figure \ref{fig:paricles-temperature-two}, it is likely the student received assistance at annotation 8, and possibly earlier, around annotation 5. 
+In this study, interventions from instructors or assistants during the activities were not documented--- but did occur. The lack of intervention data did not affect this analysis, as progress was identifiable regardless of assistance received. This method flipped the problem into an analysis tool, as with it we could make informed guesses as to when assistance took place. In Figure \ref{fig:paricles-temperature-two}, it is likely the student received assistance at annotation 8, and possibly earlier, around annotation 5. 
 
 The only way to know for sure what these specific behaviors mean is to conduct a tightly-controlled experiment where student's real-world behavior is recorded and compared to their solution particle score chart. However, such a study is not necessary to use this analysis method to create a useful teacher-facing tool. Judging the context of student behavior in real-time is a major component of classroom orchestration \citep{dillenbourg2012design}, and a skill in which teachers are specifically trained. Teachers are good at making judgment calls on which students need what, and the particle analysis method can be used to power a tool that can give teachers the information necessary for them to extend their skills into the computer lab. This tool is presented in Section \ref{sec:classroom-console}.
 
 
-\subsection{How it Works}
-This method worked by scanning the entire blocks workspace for individual blocks that were relevant to the canonical solution to the given problem. Each ``atom'' scored a point simply for existing somewhere on the workspace. If that atom was also in its correct location, meaning it had the correct type of block as its parent, an additional point would be added to the score. This technique could be used to nest atoms into others to make code molecules. These molecules could be represented by any number of atoms, which allowed solutions of any degree of complexity to be described.
+\subsection{How the Particle Analysis Method Works}
+The Particle Analysis Method worked by scanning the entire blocks workspace for individual blocks that were relevant to the canonical solution to the given problem. Each ``atom'' scored a point simply for existing somewhere on the workspace. If that atom was also in its correct location, meaning it had the correct type of block as its parent, an additional point would be added to the score. This technique could be used to nest atoms into others to make code molecules. These molecules could be represented by any number of atoms, which allowed solutions of any degree of complexity to be described.
 
 \begin{figure}
   \centering
       \includegraphics{images/ch4-particle-example-5div}
-  \caption[Example blocks to demonstrate nested particle tests]{An example block pattern to demonstrate nested particle tests. The test searches first for the number `5' literal, then whether it is in a division, then whether it is in the correct position of that division.}
+  \caption[Blocks Demonstrating Nested Particle Tests]{An example block pattern to demonstrate nested particle tests. The test searches first for the number `5' literal, then whether it is in a division, then whether it is in the correct position of that division.}
   \label{fig:particle-example-5div}
 \end{figure}
-In its current implementation, up to two additional position tests could be run contingent on the detection of an atom block. Take an example from the Temperature Activity, which requires a number literal to be used as a divisor in a division block. The block combination this example searched for is shown in Figure \ref{fig:particle-example-5div}. The test runner first scans for a number literal block containing the desired value. If it finds one or more of these literals, the first test passes, a point was scored, and it moves to the second test, which queries the location of those found blocks. If any of those blocks were found within a division block, an additional point was scored. The third test operates on the remaining set of number literals inside divisions, and it tested if they were in the correct position in that division, the dividend or divisor. If so, the third point was scored. This process is visualized in Figure \ref{fig:particle-run3}.
+In its current implementation, up to two additional position tests could be run contingent on the detection of an atom block. Take an example from the Temperature Activity, which requires a number literal to be used as a divisor in a division block. The block combination this example searched for is shown in Figure \ref{fig:particle-example-5div}. The test runner first scanned for a number literal block containing the desired value. If it found one or more of these literals, the first test passed, a point was scored, and it moved to the second test, which queried the location of those found blocks. If any of those blocks were found within a division block, an additional point was scored. The third test operated on the remaining set of number literals inside divisions, and it tested if they were in the correct position in that division, the dividend or divisor. If so, the third point was scored. This process is visualized in Figure \ref{fig:particle-run3}.
 
 \begin{figure}
   \centering
@@ -219,22 +224,24 @@ In its current implementation, up to two additional position tests could be run 
   \label{fig:particle-run3}
 \end{figure}
 
-The tests themselves come in two categories: ``find,'' which looked for certain blocks (the atom finder), and ``in a,'' which tested whether a block was ``in a'' specific parent block type. Additionally, there were helper routines of type ``this is'' which were used by the ``find'' and ``in a'' tests. In Figure \ref{fig:particle-run3}, test 1 must always be of the ``find'' type, and all subsequent tests must be of the ``in a'' type. 
+The tests themselves were in two categories: ``find,'' which looked for certain blocks (the atom finder), and ``in a,'' which tested whether a block was ``in a'' specific parent block type. Additionally, there were helper routines of type ``this is'' which were used by the ``find'' and ``in a'' tests. In Figure \ref{fig:particle-run3}, test 1 must always be of the ``find'' type, and all subsequent tests must be of the ``in a'' type. 
 
-This testing schema included a somewhat nuanced handling of variation, to account for scenarios where students had multiple blocks that satisfied the atom finder. Each test will score a single point if there are one or more blocks that satisfy the test on the workspace. If there are more than one atoms that satisfy a ``find'' test, each subsequent position test would reduce that set. Each test scored as true when the resulting set was non-empty. This method prevents over-rewarding duplicate code by preventing any test from evaluating more than once. Additionally, this provides a reliable maximum score for a given solution definition. This design does not fully handle solution definitions that have repetitive molecules. As an example, if a solution definition were to be written that had two molecules, based on two of the same atom type, but in different locations, it would be possible for a single block to trigger true for both of those ``find'' tests and score two points, which would be a slight over-reward. The over-reward would not persist once the position tests, which must differ, evaluate. This scenario would still render a useful approximation of student progress, though slightly reduced in accuracy. However, if a solution were to call for multiple molecules that evaluate identically, only one implementation would currently be necessary to pass all of those tests. In this scenario, additional differentiating tests would need to be added to the definition, and possibly the evaluation engine, in order to provide a valid progress approximation. 
+This testing schema included a somewhat nuanced handling of variation, to account for scenarios where students had multiple blocks that satisfied the atom finder. Each test will score a single point if there are one or more blocks that satisfy the test on the workspace. If there are more than one atoms that satisfy a ``find'' test, each subsequent position test would reduce that set. Each test scored as true when the resulting set was non-empty. This method prevented over-rewarding duplicate code by preventing any test from evaluating more than once. Additionally, this provided a reliable maximum score for a given solution definition. This design does not fully handle solution definitions that have repetitive molecules. As an example, if a solution definition were to be written that had two molecules, based on two of the same atom type, but in different locations, it would be possible for a single block to trigger true for both of those ``find'' tests and score two points, which would be a slight over-reward. The over-reward would not persist once the position tests, which must differ, evaluate. This scenario would still render a useful approximation of student progress, though slightly reduced in accuracy. However, if a solution were to call for multiple molecules that evaluate identically, only one implementation would currently be necessary to pass all of those tests. In this scenario, additional differentiating tests would need to be added to the definition, and possibly the evaluation engine, in order to provide a valid progress approximation. 
 This logic is also described in Figure \ref{fig:particle-run3}. 
 
 Implementation of these tests varied depending on what properties needed to be evaluated, but they all used helper tools to analyze the XML structure of the blocks workspace. Atom-finding tests were mostly a simple as checking each block for its designating property. Which property needed to be checked varied depending on the type of block, but they were all simple, constant-time reads. The position evaluators (``in a'' tests) were similarly simple, where each block's parent was looked up using the pre-rendered parent mapping structure, and the type of the parent was tested in the same fashion as the ``find'' tests. 
 
 \label{sec:close-enough-text} %this belongs with the paragraph below wherever it ends up
-Determining if a text string was equal to the solution's string was less straightforward, as there were many slightly different variations in phrasing that were all conceptually correct. An example was the ``stop shaking me'' text from the Debugging Activity. This string was fed into a text to speech engine to be spoken aloud, so any capitalization or punctuation combination were equally acceptable. Additionally, variations like ``please stop shaking me,'' ``stop shaking me now'' were also conceptually correct. A literal string compare would have regarded those falsely as incorrect. To find strings that were ``close enough'' to the exemplar, a Levenshtein edit distance was used \citep{levenshtein1966binary}. Specifically, what was used was a python implementation of an algorithm proposed by \citet{hyyro2001explaining}, which implemented the Levenshtein distance. To find the acceptable edit distances for ``good enough,'' all strings were collected from all of the activity projects in the database, along with their computed edit distance from their respective exemplar strings. The researchers sorted by edit distance value for each exemplar set, and chose a value which best delineated strings that were variations from those that were wrong. The values were different for the two exemplars: ``stop shaking me'' required an edit distance less than 9, and ``how are you'' required an edit distance less than 4. This process would need to be improved for teachers or curriculum developers to implement their own particle definitions. The method used by the researchers to reach their desired threshold values could be automated using hidden Markov Models, where ``close enough'' and ``not close enough'' examples provided by the user could automatically be assessed for a reasonable threshold value.
+Determining if a text string was equal to the solution's string was less straightforward, as there were many slightly different variations in phrasing that were all conceptually correct. An example was the ``stop shaking me'' text from the Debugging Activity. This string was fed into a text to speech engine to be spoken aloud, so any capitalization or punctuation combination were equally acceptable. Additionally, variations like ``please stop shaking me,'' ``stop shaking me now'' were also conceptually correct. A literal string compare would have regarded those falsely as incorrect. To find strings that were ``close enough'' to the exemplar, a Levenshtein edit distance was used \citep{levenshtein1966binary}. Specifically, what was used was a python implementation of an algorithm proposed by \citet{hyyro2001explaining}, which implemented the Levenshtein distance. To find the acceptable edit distances for ``good enough,'' all strings were collected from all of the activity projects in the database, along with their computed edit distance from their respective exemplar strings. The author sorted by edit distance value for each exemplar set, and chose a value which best delineated strings that were variations from those that were wrong. The values were different for the two exemplars: ``stop shaking me'' required an edit distance less than 9, and ``how are you'' required an edit distance less than 4. This process would need to be improved for teachers or curriculum developers to implement their own particle definitions. The method used by the researchers to reach their desired threshold values could be automated using hidden Markov Models, where ``close enough'' and ``not close enough'' examples provided by the user could automatically be assessed for a reasonable threshold value.
 
 The test definitions used in this study are presented in Appendix \ref{app:particle_definitions}. 
 
 \subsection{Current Weaknesses}
-The particle analysis method relied on a known solution, and provided a metric of how close to that solution a student was at any time. This was conceptually similar to \citet{le2007using} and \citet{mitrovic2003intelligent}, where both used a pre-made definition of the solution for a particular problem. The particle analysis method also shares a core weakness with those systems, where the solution definitions must be known and written in advance. Adding to the cannon of activities that can utilize the system depends on writing new solution definitions, which may be difficult for in-service teachers who already suffer from limited prep time. Perhaps content authors would be responsible for also including suitable solution definitions, but a fully automated path would clearly be better.
+The particle analysis method relied on a known solution, and provided a metric of how close to that solution a student was at any time. This was conceptually similar to \citet{le2007using} and \citet{mitrovic2003intelligent}, where both used a pre-made definition of the solution for a particular problem. The particle analysis method also shares a core weakness with those systems, where the solution definitions must be known and written in advance. Adding to the canon of activities that can use the system depends on writing new solution definitions, which may be difficult for in-service teachers who already have limited prep time. Although content authors may be responsible for also including suitable solution definitions, a fully automated path would clearly be better.
 
-The current implementation of particle analysis allows for a class of solution over-representation, where students can create invalid code that generates a score \emph{slightly higher} than that of the equivalent working code. This bug stems from a language feature of App Inventor that the particle implementation does not yet handle. This class of bug, however, should be directly addressed in the conceptual design of the particle analysis method.
+The current implementation of particle analysis also allows for a class of solution over-representation, where students can create invalid code that generates a score \emph{slightly higher} than that of the equivalent working code. This bug stems from a language feature of App Inventor that the particle implementation does not yet handle. This class of bug, however, should be directly addressed in the conceptual design of the particle analysis method.
+
+The bug itself was triggered when a student had duplicate event handlers. In App Inventor, only one of any given event handler can be present on the workspace. When there are more than one, all of the non-unique event handler blocks are marked as erroneous, and removed from the code execution path. In doing this, the student can generate code that has two copies of a solution. The algorithm was capable of handling this case to provide over-representing repeated solutions, but not for event handler blocks. Event handlers are ``top-level,'' meaning they can have no parent, and the bug was that they each triggered an entire molecule of particle tests. In short, the algorithm implementation assumed that event handler blocks would be unique, and they were not.
 
 
 \section{Patterns Observed in Particle Scores}
@@ -246,7 +253,7 @@ The current implementation of particle analysis allows for a class of solution o
 	\caption[Smooth, Rapid Progress of Particle Scores]{Smooth, rapid progress of particle scores, as shown by the student UfaDogfish in the Debugging Activity.}
 	\label{fig:smooth_chart}
 \end{figure}
-Across both activities, three general patterns of particle score progression emerged. The first, called ``smooth'' was a rapid acceleration to the conclusion, where nearly every change improved the score. The ``smooth'' category looks like as if the student already knew the answer, and implemented directly and efficiently. This pattern did allow for slight variation, and smooth-coded projects were not always monotonically increasing, but they were always rapid rises with few changes before the beginning of the upward inflection. An example is shown in Figure \ref{fig:smooth_chart}. Less than a quarter (22\%) of Debugging Activity projects showed this pattern, and just over a quarter (27\%) of the Temperature activity did.
+Across both the Debugging Activity and the Temperature Activity, three general patterns of particle score progression emerged. The first, called ``smooth,'' was a rapid acceleration to the conclusion, where nearly every change improved the score. The ``smooth'' category looks like as if the student already knew the answer, and implemented it directly and efficiently. This pattern did allow for slight variation, and smooth-coded projects were not always monotonically increasing, but they were always rapid rises with few changes before the beginning of the upward inflection. An example is shown in Figure \ref{fig:smooth_chart}. Less than a quarter (22\%) of Debugging Activity projects showed this pattern, and just over a quarter (27\%) of the Temperature activity did.
 
 \begin{figure}
 	\centering
@@ -391,7 +398,7 @@ These categories, and the students in each for both activities, is shown in Tabl
 		YaroslavlCattle	\\ \hline
 
 	\end{tabular}
-	\caption[Categories of Progress Patterns for the Debugging Activity and the Students in them]{Categories of Progress Patterns for the Debugging Activity and the Students in them.}
+	\caption[Categories of Progress Patterns for the Debugging Activity]{Categories of Progress Patterns for the Debugging Activity and the Students in them.}
 	\label{tab:pattern_names_debug}
 \end{centering}
 \end{table}
@@ -438,10 +445,160 @@ These categories, and the students in each for both activities, is shown in Tabl
 		\\ \hline
 
 	\end{tabular}
-	\caption[Categories of Progress Patterns for the Temperature Activity and the Students in them]{Categories of Progress Patterns for the Temperature Activity and the Students in them.}
+	\caption[Categories of Progress Patterns for the Temperature Activity]{Categories of Progress Patterns for the Temperature Activity and the Students in them.}
 	\label{tab:pattern_names_temp}
 \end{centering}
 \end{table}
+
+
+\section{Detailed Case Analysis}
+\label{sec:case_analysis}
+A selection of student projects were chosen for case analysis and are presented here. They were selected to represent the ``good,'' students who exhibited strong understanding from the onset, the ``bad,'' who lacked problem understanding, necessary information, or encountered some other major obstacle that prevented them from accomplishing the task, and the ``typical,'' who performed normally with periods of stumbling and successes. For each, a chart is provided that shows their score in the activity over time. These charts are drawn to the same scale within an activity to allow them to be visually comparable. Additionally, some samples from the code playback history are included, which represent highlights of the student's actual code states to provide concrete explanation for the particle scores.
+
+\subsection{Case Analysis Methodology}
+All of the collected projects were reviewed by an undergraduate research assistant using the blocks playback device. She walked through all of the students' work, and marked projects as above average, or containing a significant degree of flailing. Unmarked projects were ``typical'' and showed a variety of non-extreme behaviors, some of which will be explored below.
+
+The research assistant's manual coding was compared against a similar assessment performed using the particle score charts, which are shown below. This assessment was done by the author. In constructing these cases, the author started with the particle score charts, and hypothesized what blocks edits occurred to generate a particular chart. Then he returned to the blocks playback to see the edits directly, and used both data sources to construct the narratives below.
+
+\subsection{The Good: CampoPrairie}
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{images/stories/scores-debug-CampoPrairie}
+	\caption[Good: CampoPrairie Debugging Activity Particle Scores]{Good: CampoPrairie Debugging Activity Particle Scores.}
+	\label{fig:CampoPrairie_chart}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-CampoPrairie/1}}
+		\caption{2:29 block accidentally knocked out of place} 
+	\end{subfigure}\hfill
+	\begin{subfigure}{.4\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-CampoPrairie/2}}
+		\caption{2:31 block knocked back in} 
+	\end{subfigure}
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-CampoPrairie/3}}
+		\caption{7:14 first bug solved} 
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-CampoPrairie/4}}
+		\caption{18:21 second bug solved} 
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-CampoPrairie/5}}
+		\caption{23:48 final bug solved} 
+	\end{subfigure}
+
+	\caption[Good: CampoPrairie Debugging Activity Blocks Samples]{Good: CampoPrairie Debugging Activity Blocks Samples. This student completed the activity with minimal difficulty.}
+	\label{fig:CampoPrairie_blocks}
+\end{figure}
+
+This ``good'' example shows a student who understood the problem either at the onset, or figured it out immediately as they worked. From the Debugging Activity, the research assistant looking at blocks playback declared this student ``knew exactly what to do,'' and was coded as ``great'' efficacy. However, this student did not attempt the most difficult subgoal. This student is representative of the typical successful path for this activity. The observation that they quickly ascertained, or already knew, the strategy is supported by the score chart in Figure \ref{fig:CampoPrairie_chart}, which shows a quick and nearly monotonic progression towards the final state. This student reached the solution state in just under 24 minutes.
+
+The brief regression at the beginning of their path is a common and trivial mistake, where a valid block was momentarily knocked out of its parent block, and then quickly re-inserted. This can be seen in the block playback samples in Figure \ref{fig:CampoPrairie_blocks}.
+
+
+\subsection{The Bad: YaroslavlCattle}
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{images/stories/scores-debug-YaroslavlCattle}
+	\caption[Bad: YaroslavlCattle Debugging Activity Particle Scores]{Bad: YaroslavlCattle Debugging Activity Particle Scores. This student never progressed more than trivially, despite trying for over 30 minutes.}
+	\label{fig:YaroslavlCattle_chart}
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-YaroslavlCattle/1}}
+		\caption{11:31 introduced irrelevant \emph{GotFocus} event handler, and populated it with an irrelevant property getter.}
+	\end{subfigure}\hfill
+	\begin{subfigure}{.4\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-YaroslavlCattle/2}}
+		\caption{14:24 after deleting it, re-introduced the same event handler.} 
+	\end{subfigure}
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-YaroslavlCattle/3}}
+		\caption{16:10 effectively back at the start, a state revisited many times.} 
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-YaroslavlCattle/4}}
+		\caption{23:31 introduced irrelevant \emph{HideKeyboard} block} 
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-YaroslavlCattle/5}}
+		\caption{26:07 non-topical text entry} 
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-YaroslavlCattle/6}}
+		\caption{40:51 final, inconsistent state} 
+	\end{subfigure}
+
+	\caption[Bad: YaroslavlCattle Debugging Activity Blocks Samples]{Bad: YaroslavlCattle Debugging Activity Blocks Samples. This student flailed considerably and made only minor progress.}
+	\label{fig:YaroslavlCattle_blocks}
+\end{figure}
+This student flailed heavily in the Debugging Activity, and appeared to lack traction in understanding the problem. This is presented as ``bad'' because they never achieved more than trivial success. From viewing the blocks playback (Figure \ref{fig:YaroslavlCattle_blocks}), this student repeatedly attempted to construct the same incorrect blocks assembly. They also wrote off-topic prose into text literals, including, at one point, the entirety of the poem ``Twinkle Twinkle Little Star,'' and later, the theme song from the Mickey Mouse Club. This behavior of off-topic text was observed occasionally, and we posit that it is an indicator of lack of traction in the problem. This indicator is algorithmically identifiable, and may be suitable for inclusion in the teacher's classroom console. An intervention from a teacher or assistant was likely necessary for this student, who never accomplished more than the simplest subgoal. 
+
+
+\subsection{Typical: WarangalStinkbug}
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{images/stories/scores-debug-WarangalStinkbug}
+	\caption[Bad: YaroslavlCattle Debugging Activity Particle Scores]{Bad: YaroslavlCattle Debugging Activity Particle Scores. This student flailed initially, then was later successful.}
+	\label{fig:WarangalStinkbug_chart}
+\end{figure}
+In the Debugging Activity, a student was observed via playback assessment with ``some flailing in the beginning'' and later success. This was coded as both ``flailing'' and ``good efficacy,'' and that duality makes for a compelling case to analyze. This student started off well at the very beginning, and quickly solved the first bug, and the achieved the simple version of the second bug's solution. After that, this student was unable to make progress for over 20 minutes, during which time they added and deleted a variety of unrelated blocks in turn. This student eventually started making incremental progress. The quick drops in score, followed by immediate return, were caused by a set of blocks that were momentarily removed from their proper context, and then re-inserted. This behavior is common, so large drops in score that are short in duration are not interesting features.
+
+
+\subsection{Typical (with a bug): DenverDolphin \& YanchengGoose}
+\begin{figure}
+	\centering
+	\includegraphics[width=\textwidth]{images/stories/scores-debug-dolphin-goose-annotated}
+	\caption[DenverDolphin \& YanchengGoose Debugging Activity Particle Scores]{DenverDolphin (D) \& YanchengGoose (Y) Debugging Activity Particle Scores. These students nearly solved the final subgoal of the activity, but the nature of their mistake triggered a bug in the particle score system that over-sampled their solution, giving a slightly higher end score than was expected.}
+	\label{fig:dolphin_goose_chart}
+\end{figure}
+\begin{figure}
+	\centering
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-DenverDolphin/1}}
+		\caption{25:04} %frame 130
+	\end{subfigure}\hfill
+	\begin{subfigure}{.4\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-DenverDolphin/2}}
+		\caption{26:08} %frame 142
+	\end{subfigure}
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-DenverDolphin/3}}
+		\caption{26:43} %frame 159
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-DenverDolphin/4}}
+		\caption{29:36} %frame 181
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-DenverDolphin/5}}
+		\caption{32:21} %frame 217
+	\end{subfigure}\hfill
+	\begin{subfigure}{.45\textwidth}
+		\fbox{\includegraphics[width=\textwidth]{images/stories/blocks-debug-DenverDolphin/6}}
+		\caption{39:46 and final state}
+	\end{subfigure}
+
+	\caption[DenverDolphin Debugging Activity Blocks Samples]{DenverDolphin Debugging Activity Blocks Samples, showing the final 15 minutes of work. This student neglected to delete duplicate \emph{SpeakButton.click} handler, but otherwise had the entire activity solved.}
+	\label{fig:dolphin_blocks}
+\end{figure}
+
+Two students nearly completed the entire Debugging Activity, but had an artificially high particle score, demonstrating a current weakness in the implementation of the particle analysis technique. 
+
+Student DenverDolphin was coded as from blocks playback by the research assistant as ``extreme flailing,'' and judging from Figure \ref{fig:dolphin_goose_chart}, that assessment was correct. This student experienced long periods of activity with no forward progress, and many points of momentary progress followed by regression. YanchengGoose was similar, with a completely flat period of activity from 546 to 1637 seconds, a period of over 18 minutes with no forward progress. Both of these students, however, appeared to slowly worked their way up to the common solution as they approached thirty minutes, and then quickly found their way to an even higher particle score. The students definitely exhibited flailing behavior, but their non-productive behavior did eventually give way to a solution. However, an additional misunderstanding caused both students to access a weakness in the current particle analysis implementation, creating an artificially high score while not solving the final problem.
+
+Upon inspection of the blocks playback, DenverDolphin never actually solved the final bug completely, though came close. The student experimented over a period of about 10 minutes, slowly bringing out more of the relevant blocks, and then constructed the entirely correct event handler and actions. Sadly, they never deleted the old event handler that the new one superseded. App Inventor requires each event handler be unique, and when it encounters duplicates, both are labeled with an error indicator and both are ignored. This student was one small realization away from completing the bug they labored against. A sampling of this student's activity in the final 15 minutes of their session can be seen in Figure \ref{fig:dolphin_blocks}. 
+
+YanchengGoose exhibited the same behavior, was caught on the same stumbling block, and triggered the same score-inflation weakness. 
+
+As there are three subgoal in the Debugging Activity, there are three separate goal tests, whose scores are summed. If all were executed at the same time, the maximum score would be 16. But that would be impossible with working solutions, as solutions to successive goals actually supersede previous ones, deprecating older code structures. With that, a perfect solution is actually a score of 14. A score of 16 demonstrates a current weakness with the analysis, that a solution can still be over-represented, artificially inflating the score by a small amount.
+
 
 
 
@@ -581,6 +738,19 @@ The Chi-Square test returned a Pearson coefficient of 269.154, with no cells hav
 This test exposed that the algorithm mis-characterized 203 of the 881 snapshots. Of particular interest were the 161 instances that were manually coded as flailing, but were not detected as such by the algorithm. This will be further discussed in Section \ref{sec:algorithm-discussion}.
 
 
+\section{Flailing Detector Performance}
+\label{sec:algorithm-discussion}
+The flailing detector algorithm showed efficacy in detecting whether specific snapshots were likely to be flailing. It demonstrated this by passing a Chi-Squared comparison with manually coded data, but the results were not perfect. The algorithm mis-characterized 203 of the 881 snapshots. Of particular interest were the 161 instances that were manually coded as flailing, but were not detected as such by the algorithm. The algorithm was written to be the simplest possible that satisfies the requirements, and for that, this was acceptable performance. But there are improvements that can be made.
+
+The easiest avenue for improvement is the window parameter, which has an effect on accuracy. The window size during validation testing was hard-coded to 5, meaning each point was evaluated as flailing based on only the previous 5 changes. This created a pocket of ``startup time'' at the beginning of each project when the number of previous snapshots was not yet 5, and those were marked as non-flailing by default. Moving forward, these may be better marked as a third category: unknown. That third category would be small, so to validate it using Chi-Squared, significantly more data would need to be coded. This test is possible, and would be likely to offer a small but significant improvement in accuracy.
+
+The algorithm was most accurate in projects where snapshots were dense over a time period, as the window of 5 changes was always full with recent and informative data. During experimentation, varying the window size did affect the behavior of the algorithm. A window size set too small did not mark local oscillations of score as flailing, as it looked at too little history to recognize that the repeated improvements in score quickly regressed. A window size set too large did not identify flat periods as flailing quickly enough, and as such was too generous in labeling points as non-flailing. I believe the window size used in this trial was functioning in the latter condition, as it was often incorrect on points that fell at the beginning of flat plateaus. 
+
+An ideal window size could be found through a curve-fitting-type approach. Various window size arguments could be applied to the same data, and the Chi-Squared test itself could be used as the fitness function, and the parameter value which generates the lowest Pearson score would be selected as a starting point for future data analysis. This method would assume that an ideal parameter exists. The author did a three rudimentary iterations of this technique to decide on 5 as the initial value for the validation study. It is unclear if simply changing the window value would perform yield better performance without improvements to the algorithm itself.
+
+Considering all of the observed behaviors of the algorithm, we hypothesize that a hysteresis technique would significantly improve performance and greatly lower the rate of mis-categorization. A hysteresis is compelling given that the errors occur primarily in one direction-- the algorithm marks non-flailing more often than it should, but not the reverse. It needs to more quickly identify when a score plateau has been reached. This means it needs to act more like the behavior of a small window value, but also needs to retain the oscillation detection made possible by a larger window. I hysteresis technique could allow the algorithm to move ``faster'' in one direction than the other, that a score remaining stagnant, or close, should be detected quickly, but a score that improves should require more information to validate that it is not a local oscillation. This may require the addition of state to the algorithm, where it would have to keep track of the flailing states of the snapshots in the window. This is clearly feasible, and would be likely to offer significant accuracy improvements. These changes were not implemented here, as this study only called for the minimum viable implementation to demonstrate the concept, which was successful.
+
+The Flailing Detector Algorithm can detect the likelihood of flailing with only a short history, allowing it to be used in real-time as the activity unfolds. This new feature can be added to the Classroom Console as an additional indicator to the teachers. A user experience design would need to be conducted, but as a naive guess, it may be represented as flashing, a color change, or an additional indicator within a student's readout on the console. This feature, which was requested by many of the teachers interviewed, would make the Console easier to interpret, as that critical feature would be presented quickly and explicitly.
 
 
 
@@ -597,28 +767,32 @@ This test exposed that the algorithm mis-characterized 203 of the 881 snapshots.
 
 Based on the insights afforded by the particle analysis method, an orchestration technology was designed. Orchestration, as \citeauthor{dillenbourg2012design} described, ``refers to how a teacher manages in real-time multi-layered activities in a multi-constraints context" (\citeyear{dillenbourg2012design}). In the general case of App Inventor classrooms, teachers need to manage many levels of technology in addition to the difficult task of managing class-wide pedagogy, and the scaffolding of specific students as necessary. The orchestration technology developed here aims to support the activity of orchestrating \citep{tchounikine2013clarifying}.
 
-The orchestration technology is referred to as the Classroom Console. An excerpt of the console is shown in Figure \ref{fig:console-demo}. This console, at a glance, gives teachers insight into the status of individual students and the class as a whole. Multiple dimensions of information are presented with visualization strategies that we believe are aggregated to a degree that makes it useful lightweight to use. The goals of the console are follows, for each student, it must display:
+The present study's orchestration technology is referred to as the Classroom Console. An excerpt of the console is shown in Figure \ref{fig:console-demo}. This console, at a glance, gives teachers insight into the status of individual students and the class as a whole. Multiple dimensions of information are presented with visualization strategies that we believe are aggregated to a degree that makes it easy to use. 
+
+This is a concept prototype, which visualizes pre-recorded, historical data in real-time, but is not yet suitable for classroom use.
+
+The goals of the console are follows, for each student, it must display:
 
 \begin{description}
-\item [Current particle score] The primary display element is the student's current score. This is updated in real-time as they work.
+\item [Current particle score] The primary display element is the student's current score. Would be updated in real-time as they work.
 \item [Time since score advanced] A ``timeout bar'' accompanies the score display, showing how much time has elapsed since the score has increased.
 \item [Active or away] The timeout bar changes color to indicate whether the student is working actively or idle.
 \end{description}
 
-Additionally, the console must give the teacher a ``landscape view'' of the entire class. The visual score bars for each student are easily assessed as a group, so approximate progress of the entire class can be seen at a glance. If all the bars are low, then the class in general is either at the beginning, or may be in need of a class-wide clarification or hint. 
+Additionally, the console must give the teacher a ``landscape view'' of the entire class. The visual score bars for each student must be easily assessed as a group, so approximate progress of the entire class can be seen at a glance. If all the bars are low, then the class in general is either at the beginning, or may be in need of a class-wide clarification or hint. 
 
 \subsection{Pre-Recorded Data}
-This tool was a conceptual mockup. It did not work with live-collected data, but did operate on previously collected data from the study. The console as seen here is effectively a replay device, playing back real classroom data that were collected in real time. The data were genuine, and the timings expressed were the real-time observations of real students in their environments. This platform is ideal for design discussion. Connecting this concept to a live learning management environment is reserved for future work. 
+This tool was a conceptual mockup. It did not work with live-collected data, but did operate on previously collected data from the study. The console as seen here is effectively a replay device, playing back real classroom data that were collected in real time. The data were genuine, and the timings expressed were the real-time observations of real students in their environments. This was used for design discussion. Connecting this concept to a live learning management environment is reserved for future work. 
 
 \subsection{The Console in Detail}
-A single student's display is annotated in Figure \ref{fig:console-single-annotated}. It shows the student's identifier, which could be their name (a), their current score on the problem from particle analysis (b), and a timeout bar (c). The timeout bar fills in one-minute intervals, starting with zero. The timeout bar also changes color to reflect when the student is no longer actively working, and has become idle. This ``away'' indicator can be seen in Figure \ref{fig:console-demo}, where the first two students are active and the third is away. The third student's idle bar is a lighter color.
+A single student's display is shown with annotations in Figure \ref{fig:console-single-annotated}. It shows the student's identifier, which could be their name (a), their current score on the problem from particle analysis (b), and a timeout bar (c). The timeout bar fills in one-minute intervals, starting with zero. The timeout bar also changes color to reflect when the student is no longer actively working, and has become idle. This ``away'' indicator can be seen in Figure \ref{fig:console-demo}, where the first two students are active and the third is away. The third student's idle bar is a lighter color.
 
-A full classroom of 29 students is shown in Figure {fig:console-classroom}. There are many stories that can be deduced from this single moment. At the time of capture, many students had completed or near-completed the activity, indicated by the prevalence of tall blue bars. Students KermanshahCo, KobeSalamander, and PhoenixWeasel were examples of students who had completed the activity, and then became idle. Logically, at the conclusion of the activity these students became idle, as they had nothing left to do. They may have been elsewhere in the classroom, but were no longer engaging with App Inventor. Conversely, TaizhouSwallow, located in the lower-left corner of the Console, appeared to be having difficulty. This student is showing a low score, and has also been actively working with no forward progress for five minutes or more. Students with no indicators in the timeout bar, such as PointeCheetah and ShiheziBat in the middle row, had progressed their scores forward within the last minute. Every block in the timeout bar represented one minute of time, and a full bar of five blocks indicated five or more minutes without progress. 
+A full classroom of 29 students is shown in Figure \ref{fig:console-classroom}. There are many stories that can be deduced from this single moment. At the time of capture, many students had completed or near-completed the activity, indicated by the prevalence of tall blue bars. Students KermanshahCo, KobeSalamander, and PhoenixWeasel completed the activity, and then became idle. Logically, at the conclusion of the activity these students became idle, as they had nothing left to do. They may have been elsewhere in the classroom, but were no longer engaging with App Inventor. Conversely, TaizhouSwallow, located in the lower-left corner of the Console, appeared to be having difficulty. This student is showing a low score, and has also been actively working with no forward progress for five minutes or more. Students with no indicators in the timeout bar, such as PointeCheetah and ShiheziBat in the middle row, had progressed their scores forward within the last minute. Every block in the timeout bar represented one minute of time, and a full bar of five blocks indicated five or more minutes without progress. 
 
 \begin{figure}
   \centering
       \includegraphics{images/ch4-console-single-annotated}
-  \caption[One student display, annotated]{One student's display from the Classroom Console. }
+  \caption[One Student in the Classroom Console]{One student's display from the Classroom Console. Annotation (a) indicates the student identifier, in this case their code name, DortmundBat. (b) indicates the progress bar, which fills upwards as students make progress. It can also un-fill downward to show regression. (c) shows the timeout indicator, where each square represents a unit of time since progress was last made.}
   \label{fig:console-single-annotated}
 \end{figure}
 
@@ -626,7 +800,50 @@ A full classroom of 29 students is shown in Figure {fig:console-classroom}. Ther
 \begin{figure}
   \centering
       \includegraphics[width=\textwidth]{images/ch4-console-class}
-  \caption[Full classroom display of the Classroom Console]{A full classroom of 29 displayed in the Classroom Console.}
+  \caption[Full Classroom Display in the Classroom Console]{A full classroom of 29 displayed in the Classroom Console.}
   \label{fig:console-classroom}
 \end{figure}
+
+
+\subsection{Evaluating the Classroom Console}
+\label{sec:console_evaluation}
+
+% assert console is good, using:
+%	Teacher interview feedback
+%	Comparison against design goals from literature - Dillenbourg
+The researchers recruited a group of instructors who use App Inventor in their classrooms to see, discuss, and critique the Classroom Console. They were interviewed individually, where they were shown the some brief background, the particle assessment concept, a demonstration of the Console. Their reactions were overwhelmingly positive, where the most common question was a form of ``when can I use this?'' The instructors also provided criticism, identified potential weaknesses in the design, and engaged in discussion on how to overcome those weaknesses. One instructor, during the demonstration said, ``I can see right now two students I want to go talk to.'' This discourse is summarized below.
+
+The instructors interviewed were two middle school teachers, two middle and high school specialty teachers, two high school and undergraduate instructors, and one undergraduate professor in charge of five lab sections. Their localities included the United States east coast and Midwest, and South America. 
+
+There were observations were made by teachers: 
+\begin{itemize}
+\item The console could easily identify ``needy'' students, who ask for help immediately without first trying on their own. This is valuable feature for knowing who they are, and providing insight to the teacher that they hadn't yet attempted the problem. %TODO there is definitely a term for this
+\item Similarly, this tool would make it easy to identify high-performing students who could be tasked to help their struggling peers. (Researchers did not realize the tool could be used to identify exemplary performance just as easily as flailing!) 
+\item The above matching feature could be automated, in the style of \citet{Diana:2017:IDR:3027385.3027441}.
+\item Sometimes teachers only see students every 8-9 school days, so the ability to catch idle periods of mere minutes can be critical. 
+\item It is possible for a student who is disengaged to be sitting next to an engaged student, and they both look like they're engaged, which is misleading to a teacher observing without a tool like the Console.
+\item When a student returns from a bathroom break, the tool can help assess how quickly they resume engagement.
+\item The Console may aid in cases where students choose not to participate, as the student would be monitored an unable to claim they worked when they did not.
+\item Training instructors to use the console may be non-trivial, especially when requiring them to develop their own activities with it. 
+\item As the tool would be an inexact proxy, experience with the tool may increase the instructor's efficacy with it.
+\item High school students are especially afraid to fail, so they often choose not to try anything. The console may help identify that behavior.
+\item Student feedback often includes the complaint that they did not get enough attention. The students could be feeling frustration that the instructor is not seeing, and the Console may help the instructor gain access into that.
+\end{itemize}
+
+The teachers requested the following features:
+\begin{itemize}
+\item An automated flag to visually highlight students who are currently exhibiting significant flailing behavior.
+\item Flexibility in timeout bar. Some activities and classrooms will have different time frames that would be considered concerning.
+\item Treatment for score regression, which is currently not highlighted. 
+\item Take the start point with gift code into consideration, and flag the teacher if the student drops below that point, as they have broken their starting configuration and likely need help restoring it.
+\item A history so teachers can replay or otherwise visual past classroom sessions, and compare them over time. This may be visible as a line chart of the session.
+\item Reporting to demonstrate a student's progress in labs over time, suitable for program assessment. 
+\item Control over layout, so student locations in Console reflect the seating plan of the classroom.
+\item Ability to define your own activities and their corresponding solution particles.
+\item Pseudo-anonymized student identifiers, such that the console could be displayed on the projector while the teacher moves around the room.
+\end{itemize}
+
+One analysis idea presented by an instructor was to display the \emph{number of attempts} at a certain point of a problem, which would allow the teacher to expect and allow a certain number of attempts before requiring intervention. This method would require further work to better define what an ``attempt'' should mean in general context, and in an activity-specific context.
+
+The instructors were overall excited about the tool, and raised real-world concerns that could further inform the design of the Classroom Console. The instructors declared that the design was ready for prototype use, all citing their desire to use it to enhance their teaching practice.
 
